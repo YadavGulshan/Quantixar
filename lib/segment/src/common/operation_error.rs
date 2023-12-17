@@ -2,6 +2,7 @@ use std::backtrace::Backtrace;
 use std::io::{Error as IoError, ErrorKind};
 use thiserror::Error;
 use crate::utils::mem::Mem;
+use crate::common::mmap_type::Error as MmapError;
 
 pub type OperationResult<T> = Result<T, OperationError>;
 
@@ -33,6 +34,12 @@ impl OperationError {
             description: description.into(),
             backtrace: Some(Backtrace::force_capture().to_string()),
         }
+    }
+}
+
+impl From<MmapError> for OperationError {
+    fn from(err: MmapError) -> Self {
+        Self::service_error(err.to_string())
     }
 }
 
