@@ -1,0 +1,71 @@
+[package]
+name = "segment"
+version = "0.0.1"
+edition = "2021"
+
+
+[features]
+
+default = []
+# simd on x86/x86_64
+simdeez_f = ["simdeez"]
+# a beta feature experimental
+stdsimd = ["packed_simd"]
+
+[dev-dependencies]
+criterion = "0.5"
+rmp-serde = "~1.1"
+rand_distr = "0.4.3"
+walkdir = "2.4.0"
+rstest = "0.18.2"
+proptest = "1.4.0"
+tempfile = "3.8.1"
+hdf5 = {version = "0.8"}
+
+[dependencies]
+quantization = { git = "https://github.com/qdrant/quantization.git" }
+
+tinyvec = { version = "1.6.0", features = ["alloc"] }
+ndarray = {version = "0.15"}
+ndarray-rand = "0.14.0"
+
+
+serde = { version = "~1.0", features = ["derive", "rc"] }
+itertools = "0.12"
+parking_lot = "0.12"
+num_cpus = "1.16"
+serde_json = "~1.0"
+serde_cbor = "0.11.2"
+serde-value = "0.7"
+num-traits = "0.2.16"
+num-derive = "0.4.1"
+rand = "0.8"
+bitvec = "1.0.1"
+seahash = "4.1.0"
+tar = "0.4.40"
+lazy_static = "1.4"
+
+sysinfo = "0.29"
+futures = "0.3.28"
+thiserror = "1.0"
+log = "0.4"
+tracing = { version = "0.1", features = ["async-await"], optional = true }
+cfg-if = {version = "1.0"}
+
+
+# x86_64 simd stuff , enabled by  simdeez_f feature
+simdeez = {version = "1.0", optional = true}
+# beta
+packed_simd = { version = "0.3", optional = true}
+
+
+common = { path = "../common/common" }
+io = { path = "../common/io" }
+memory = { path = "../common/memory" }
+schemars = "0.8.16"
+validator = { version = "0.16.1", features = ["derive"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+cgroups-rs = "0.3"
+procfs = { version = "0.16", default-features = false }
+io-uring = "0.6.2"

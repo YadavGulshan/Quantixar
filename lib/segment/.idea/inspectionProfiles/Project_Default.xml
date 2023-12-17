@@ -1,0 +1,143 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="HttpUrlsUsage" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="ignoredUrls">
+        <list>
+          <option value="http://localhost" />
+          <option value="http://127.0.0.1" />
+          <option value="http://0.0.0.0" />
+          <option value="http://www.w3.org/" />
+          <option value="http://json-schema.org/draft" />
+          <option value="http://java.sun.com/" />
+          <option value="http://xmlns.jcp.org/" />
+          <option value="http://javafx.com/javafx/" />
+          <option value="http://javafx.com/fxml" />
+          <option value="http://maven.apache.org/xsd/" />
+          <option value="http://maven.apache.org/POM/" />
+          <option value="http://www.springframework.org/schema/" />
+          <option value="http://www.springframework.org/tags" />
+          <option value="http://www.springframework.org/security/tags" />
+          <option value="http://www.thymeleaf.org" />
+          <option value="http://www.jboss.org/j2ee/schema/" />
+          <option value="http://www.jboss.com/xml/ns/" />
+          <option value="http://www.ibm.com/webservices/xsd" />
+          <option value="http://activemq.apache.org/schema/" />
+          <option value="http://schema.cloudfoundry.org/spring/" />
+          <option value="http://schemas.xmlsoap.org/" />
+          <option value="http://cxf.apache.org/schemas/" />
+          <option value="http://primefaces.org/ui" />
+          <option value="http://tiles.apache.org/" />
+          <option value="http://${aws_ecs_service.app.name}.${aws_service_discovery_private_dns_namespace.app.name}" />
+          <option value="http://internal-duckdb-dev-lb-2128409943.us-east-2.elb.amazonaws.com" />
+          <option value="http://${aws_service_discovery_service.app[0].name}.${aws_service_discovery_private_dns_namespace.app[0].name}" />
+          <option value="http://${length(aws_service_discovery_service.app)" />
+          <option value="http://${aws_lb.main.*.dns_name}" />
+          <option value="http://${aws_lb.main[0].dns_name}" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyCompatibilityInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ourVersions">
+        <value>
+          <list size="4">
+            <item index="0" class="java.lang.String" itemvalue="3.12" />
+            <item index="1" class="java.lang.String" itemvalue="3.11" />
+            <item index="2" class="java.lang.String" itemvalue="3.9" />
+            <item index="3" class="java.lang.String" itemvalue="3.10" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <value>
+          <list size="48">
+            <item index="0" class="java.lang.String" itemvalue="watchfiles" />
+            <item index="1" class="java.lang.String" itemvalue="pydantic" />
+            <item index="2" class="java.lang.String" itemvalue="six" />
+            <item index="3" class="java.lang.String" itemvalue="PyYAML" />
+            <item index="4" class="java.lang.String" itemvalue="python-dateutil" />
+            <item index="5" class="java.lang.String" itemvalue="python-dotenv" />
+            <item index="6" class="java.lang.String" itemvalue="h11" />
+            <item index="7" class="java.lang.String" itemvalue="numpy" />
+            <item index="8" class="java.lang.String" itemvalue="click" />
+            <item index="9" class="java.lang.String" itemvalue="sniffio" />
+            <item index="10" class="java.lang.String" itemvalue="httptools" />
+            <item index="11" class="java.lang.String" itemvalue="pandas" />
+            <item index="12" class="java.lang.String" itemvalue="fastapi" />
+            <item index="13" class="java.lang.String" itemvalue="duckdb" />
+            <item index="14" class="java.lang.String" itemvalue="starlette" />
+            <item index="15" class="java.lang.String" itemvalue="typing_extensions" />
+            <item index="16" class="java.lang.String" itemvalue="anyio" />
+            <item index="17" class="java.lang.String" itemvalue="pytz" />
+            <item index="18" class="java.lang.String" itemvalue="uvicorn" />
+            <item index="19" class="java.lang.String" itemvalue="uvloop" />
+            <item index="20" class="java.lang.String" itemvalue="websockets" />
+            <item index="21" class="java.lang.String" itemvalue="idna" />
+            <item index="22" class="java.lang.String" itemvalue="tensorflow" />
+            <item index="23" class="java.lang.String" itemvalue="pyyaml" />
+            <item index="24" class="java.lang.String" itemvalue="sqlitis" />
+            <item index="25" class="java.lang.String" itemvalue="greenlet" />
+            <item index="26" class="java.lang.String" itemvalue="pytest" />
+            <item index="27" class="java.lang.String" itemvalue="iniconfig" />
+            <item index="28" class="java.lang.String" itemvalue="pluggy" />
+            <item index="29" class="java.lang.String" itemvalue="duckdb-engine" />
+            <item index="30" class="java.lang.String" itemvalue="packaging" />
+            <item index="31" class="java.lang.String" itemvalue="typing-extensions" />
+            <item index="32" class="java.lang.String" itemvalue="pyparsing" />
+            <item index="33" class="java.lang.String" itemvalue="sqlalchemy" />
+            <item index="34" class="java.lang.String" itemvalue="boto3" />
+            <item index="35" class="java.lang.String" itemvalue="botocore" />
+            <item index="36" class="java.lang.String" itemvalue="gitpython" />
+            <item index="37" class="java.lang.String" itemvalue="aiobotocore" />
+            <item index="38" class="java.lang.String" itemvalue="aiohttp" />
+            <item index="39" class="java.lang.String" itemvalue="jmespath" />
+            <item index="40" class="java.lang.String" itemvalue="s3transfer" />
+            <item index="41" class="java.lang.String" itemvalue="certifi" />
+            <item index="42" class="java.lang.String" itemvalue="charset-normalizer" />
+            <item index="43" class="java.lang.String" itemvalue="tzdata" />
+            <item index="44" class="java.lang.String" itemvalue="psycopg2-binary" />
+            <item index="45" class="java.lang.String" itemvalue="urllib3" />
+            <item index="46" class="java.lang.String" itemvalue="requests" />
+            <item index="47" class="java.lang.String" itemvalue="aws-lambda-powertools" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyPep8Inspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="ignoredErrors">
+        <list>
+          <option value="E501" />
+          <option value="E402" />
+          <option value="E262" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyPep8NamingInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="ignoredErrors">
+        <list>
+          <option value="N806" />
+          <option value="N802" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredIdentifiers">
+        <list>
+          <option value="duckdb.DuckDBPyConnection.__await__" />
+          <option value="fastapi.logger.info" />
+          <option value="tensorflow" />
+          <option value="numpy" />
+          <option value="sqlalchemy.orm.decl_api.DeclarativeMeta.day0_date" />
+          <option value="sqlalchemy.orm.decl_api.DeclarativeMeta.*" />
+          <option value="aiohttp.client_exceptions.ClientError.*" />
+          <option value="src.manualCheckDT.dt_v1.manager.aws_lambda_powertools" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="ShellCheck" enabled="true" level="ERROR" enabled_by_default="true">
+      <shellcheck_settings value="SC2016" />
+    </inspection_tool>
+  </profile>
+</component>

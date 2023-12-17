@@ -6,3 +6,16 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+
+io = { path = "lib/common/io" }
+common = { path = "lib/common/common" }
+cancel = { path = "lib/common/cancel" }
+memory = { path = "lib/common/memory" }
+segment = { path = "lib/segment" }
+
+
+[workspace]
+members = [
+    "lib/common/*",
+    "lib/segment",
+]
