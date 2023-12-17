@@ -4,6 +4,7 @@ use packed_simd::*;
 #[cfg(feature = "simdeez_f")]
 use simdeez::*;
 #[cfg(feature = "simdeez_f")]
+#[cfg(target_arch = "x86_64")]
 use simdeez::avx2::*;
 
 use crate::spaces::distance::DistanceMetric;
@@ -92,6 +93,7 @@ unsafe fn distance_l1_f32<S: Simd>(v1: &[f32], v2: &[f32]) -> f32 {
 
 #[cfg(feature = "simdeez_f")]
 #[target_feature(enable = "avx2")]
+#[cfg(target_arch = "x86_64")]
 unsafe fn distance_l1_f32_avx2(va: &[f32], vb: &[f32]) -> f32 {
     distance_l1_f32::<Avx2>(va, vb)
 }
@@ -109,13 +111,19 @@ impl Metric<f32> for CityBlockMetric {
                     return unsafe {distance_l1_f32_avx2(va,vb)};
                 }
                 else {
-                    assert_eq!(va.len(), vb.len());
-                    va.iter().zip(vb.iter()).map(|t| (*t.0 as f32- *t.1 as f32).abs()).sum()
+                    assert_eq!(v1.len(), v1.len());
+                    v1.iter().zip(v1.iter()).map(|t| (*t.0 as f32- *t.1 as f32).abs()).sum()
                 }
+            }
+           #[cfg(target_arch = "aarch64")] {
+                else {
+                    assert_eq!(v1.len(), v2.len());
+                    v1.iter().zip(v2.iter()).map(|t| (*t.0 as f32- *t.1 as f32).abs()).sum()
+                 }
             }
         }
         else if #[cfg(feature = "stdsimd")] {
-            distance_l1_f32_simd(va,vb)
+            distance_l1_f32_simd(v1,v2)
             }
         else {
             v1.iter().zip(v2.iter()).map(|t| (*t.0 as f32- *t.1 as f32).abs()).sum()
