@@ -45,7 +45,7 @@ pub unsafe fn euclidian_neon_similarity(
 }
 
 #[cfg(target_feature = "neon")]
-pub unsafe fn dot_similarity(v1: &[VectorElementType], v2: &[VectorElementType]) -> ScoreType {
+pub unsafe fn dot_neon_similarity(v1: &[VectorElementType], v2: &[VectorElementType]) -> ScoreType {
     let n = v1.len();
     let m = n - (n % 16);
     let mut ptr1: *const f32 = v1.as_ptr();

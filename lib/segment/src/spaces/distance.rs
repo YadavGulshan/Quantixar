@@ -30,3 +30,11 @@ pub fn euclid_similarity(v1: &[VectorElementType], v2: &[VectorElementType]) -> 
         .sum();
     -result
 }
+
+pub fn dot_similarity(v1: &[VectorElementType], v2: &[VectorElementType]) -> ScoreType {
+    v1
+        .iter()
+        .zip(v2)
+        .map(|(x, y)| x * y)
+        .sum()
+}
