@@ -1,7 +1,12 @@
+use crate::spaces::neon::euclidian_neon_similarity;
 use crate::types::distance::{Distance, ScoreType};
 use crate::types::vector::{VectorElementType, VectorType};
 
-pub trait Metric<T:Send+Sync>  {
+use super::distance::euclid_similarity;
+/// Minimal size of vector for SIMD processing
+const MIN_DIM_SIZE_SIMD: usize = 16;
+
+pub trait Metric<T: Send + Sync> {
     fn distance() -> Distance;
 
     /// Greater the value - closer the vectors
@@ -15,7 +20,6 @@ pub trait Metric<T:Send+Sync>  {
     fn postprocess(score: ScoreType) -> ScoreType;
 }
 
-
 #[derive(Clone)]
 pub struct CityBlockMetric;
 
@@ -27,7 +31,6 @@ pub struct DotProductMetric;
 
 #[derive(Clone)]
 pub struct CosineMetric;
-
 
 #[derive(Clone)]
 pub struct HammingMetric;
@@ -43,3 +46,19 @@ pub struct Jeffreys;
 
 #[derive(Clone)]
 pub struct JensenShannon;
+
+impl Metric for EuclidMetric {
+    fn distance() -> Distance {
+        Distance::Euclid
+    }
+
+    fn similarity(v1: &[VectorElementType], v2: &[VectorElementType]) -> ScoreType {
+        #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
+        {
+            if std::arch::is_aarch64_feature_detected!("neon") {
+                unsafe { euclidian_neon_similarity(v1, v2) }
+            }
+        }
+        euclid_similarity(v1, v2)
+    }
+}
