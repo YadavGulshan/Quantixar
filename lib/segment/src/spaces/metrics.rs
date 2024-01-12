@@ -1,9 +1,12 @@
-use crate::spaces::neon::euclidian_neon_similarity;
 use crate::types::distance::{Distance, ScoreType};
 use crate::types::vector::{VectorElementType, VectorType};
 
 use super::distance::{dot_similarity, euclid_similarity};
+
+#[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
 use super::neon::dot_neon_similarity;
+#[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
+use crate::spaces::neon::euclidian_neon_similarity;
 
 /// Minimal size of vector for SIMD processing
 #[cfg(any(

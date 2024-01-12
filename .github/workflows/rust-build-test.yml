@@ -25,8 +25,9 @@ jobs:
           - macOS-latest
         rust:
           - stable
-          - beta
-          - nightly
+        dir:
+          - lib/segment
+          - lib/common
     runs-on: ${{ matrix.os }}
     needs: [compile]
     steps:
@@ -37,4 +38,5 @@ jobs:
         with:
           rust-version: ${{ matrix.rust }}
       - name: Build | Compile
+        working-directory: ${{ matrix.dir }}
         run: cargo test
