@@ -1,5 +1,5 @@
 #[cfg(target_feature = "neon")]
-use std::arch::aarch64::neon::*;
+use std::arch::aarch64::*;
 
 use common::types::ScoreType;
 
@@ -70,4 +70,29 @@ pub unsafe fn dot_neon_similarity(v1: &[VectorElementType], v2: &[VectorElementT
         result += (*ptr1.add(i)) * (*ptr2.add(i));
     }
     result
+}
+
+#[cfg(test)]
+mod test {
+    #[cfg(target_feature = "neon")]
+    #[test]
+    fn test_neon_spaces() {
+        use super::*;
+        use crate::spaces::distance::euclid_similarity;
+
+        if std::arch::is_aarch64_feature_detected!("neon") {
+            let v1: Vec<f32> = vec![
+                13., 16., 19., 22., 25., 28., 31., 34., 37., 40., 43., 46., 49., 52., 55., 58.,
+            ];
+            let v2: Vec<f32> = vec![
+                12., 15., 18., 21., 24., 27., 30., 33., 36., 39., 42., 45., 48., 51., 54., 57.,
+            ];
+
+            let euclid_simd = unsafe { euclidian_neon_similarity(&v1, &v2) };
+            let euclid = euclid_similarity(&v1, &v2);
+            assert_eq!(euclid_simd, euclid);
+        } else {
+            println!("neon not supported");
+        }
+    }
 }

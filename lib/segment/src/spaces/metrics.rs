@@ -54,7 +54,7 @@ pub struct Jeffreys;
 #[derive(Clone)]
 pub struct JensenShannon;
 
-impl Metric for EuclidMetric {
+impl Metric<VectorElementType> for EuclidMetric {
     fn distance() -> Distance {
         Distance::Euclid
     }
@@ -63,14 +63,22 @@ impl Metric for EuclidMetric {
         #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
         {
             if std::arch::is_aarch64_feature_detected!("neon") && v1.len() >= MIN_DIM_SIZE_SIMD {
-                unsafe { euclidian_neon_similarity(v1, v2) }
+                return unsafe { euclidian_neon_similarity(v1, v2) };
             }
         }
         euclid_similarity(v1, v2)
     }
+
+    fn preprocess(vector: Vec<VectorElementType>) -> Vec<VectorElementType> {
+        vector
+    }
+
+    fn postprocess(score: ScoreType) -> ScoreType {
+        score
+    }
 }
 
-impl Metric for DotProductMetric {
+impl Metric<VectorElementType> for DotProductMetric {
     fn distance() -> Distance {
         Distance::Dot
     }
@@ -79,9 +87,17 @@ impl Metric for DotProductMetric {
         #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
         {
             if std::arch::is_aarch64_feature_detected!("neon") && v1.len() >= MIN_DIM_SIZE_SIMD {
-                unsafe { dot_neon_similarity(v1, v2) }
+                return unsafe { dot_neon_similarity(v1, v2) };
             }
         }
         dot_similarity(v1, v2)
+    }
+
+    fn preprocess(vector: Vec<VectorElementType>) -> Vec<VectorElementType> {
+        vector
+    }
+
+    fn postprocess(score: ScoreType) -> ScoreType {
+        score
     }
 }
