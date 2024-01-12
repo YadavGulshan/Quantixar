@@ -75,7 +75,7 @@ pub fn city_block_distance_f32_simd(v1: &[f32], v2: &[f32]) -> ScoreType {
     dist
 }
 
-#[cfg(feature = "simdeez_f")]
+#[cfg(all(feature = "simdeez_f", target_arch = "x86_64"))]
 unsafe fn distance_l1_f32<S: Simd>(v1: &[f32], v2: &[f32]) -> f32 {
     assert_eq!(v1.len(), v2.len());
     let mut dist_simd = S::setzero_ps();
@@ -178,8 +178,10 @@ impl Metric<VectorElementType> for CityBlockMetric {
 }
 
 mod tests {
-    use crate::{types::vector::VectorElementType, spaces::metrics::{CityBlockMetric, Metric}};
-
+    use crate::{
+        spaces::metrics::{CityBlockMetric, Metric},
+        types::vector::VectorElementType,
+    };
 
     #[test]
     fn test_city_block_metric() {

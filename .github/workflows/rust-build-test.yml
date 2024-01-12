@@ -13,6 +13,13 @@ jobs:
         uses: ATiltedTree/setup-rust@v1
         with:
           rust-version: stable
+      - name: Cache Rust dependencies
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.os }}-rust-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-rust-
       - name: setup | Compile
         run: cargo check
   test:
@@ -29,6 +36,9 @@ jobs:
           - lib/common
     runs-on: ${{ matrix.os }}
     needs: [compile]
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}/${{ matrix.dir }}
     steps:
       - name: Setup | Checkout
         uses: actions/checkout@v2
@@ -36,6 +46,12 @@ jobs:
         uses: ATiltedTree/setup-rust@v1
         with:
           rust-version: ${{ matrix.rust }}
+      - name: Cache Rust dependencies
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.os }}-rust-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-rust-
       - name: Build | Compile
-        working-directory: ${{ matrix.dir }}
         run: cargo test
