@@ -1,0 +1,57 @@
+name: "Quantixar Build And Test"
+
+on: [push]
+
+jobs:
+  compile:
+    name: Compile
+    runs-on: ubuntu-latest
+    steps:
+      - name: setup | checkout
+        uses: actions/checkout@v2
+      - name: setup | Rust
+        uses: ATiltedTree/setup-rust@v1
+        with:
+          rust-version: stable
+      - name: Cache Rust dependencies
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.os }}-rust-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-rust-
+      - name: setup | Compile
+        run: cargo check
+  test:
+    name: tests
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macOS-latest
+        rust:
+          - stable
+        dir:
+          - lib/segment
+          - lib/common
+    runs-on: ${{ matrix.os }}
+    needs: [compile]
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}/${{ matrix.dir }}
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v2
+      - name: Setup | Rust
+        uses: ATiltedTree/setup-rust@v1
+        with:
+          rust-version: ${{ matrix.rust }}
+      - name: Cache Rust dependencies
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: ${{ runner.os }}-rust-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-rust-
+      - name: Build | Compile
+        run: cargo test

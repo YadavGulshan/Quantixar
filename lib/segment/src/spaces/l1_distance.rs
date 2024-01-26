@@ -1,14 +1,21 @@
 use cfg_if;
 #[cfg(feature = "stdsimd")]
 use packed_simd::*;
+
 #[cfg(feature = "simdeez_f")]
 use simdeez::*;
+
 #[cfg(feature = "simdeez_f")]
 #[cfg(target_arch = "x86_64")]
 use simdeez::avx2::*;
 
+#[cfg(target_feature = "neon")]
+use std::arch::aarch64::*;
+
 use crate::spaces::distance::DistanceMetric;
 use crate::spaces::metrics::{CityBlockMetric, Metric};
+#[cfg(target_feature = "neon")]
+use crate::spaces::neon::city_block_similarity_neon;
 use crate::types::distance::{Distance, ScoreType};
 use crate::types::vector::VectorElementType;
 
@@ -36,7 +43,6 @@ macro_rules! implement_city_block_metric (
     )
 );
 
-
 implement_city_block_metric!(i32);
 implement_city_block_metric!(f64);
 implement_city_block_metric!(i64);
@@ -44,10 +50,12 @@ implement_city_block_metric!(u32);
 implement_city_block_metric!(u16);
 implement_city_block_metric!(u8);
 
-fn residual_city_block_distance(v1: &[f32], v2: &[f32]) -> f32 {
-    v1.iter().zip(v2.iter()).map(
-        |(a, b)| (a - b).abs()
-    ).sum()
+#[cfg(feature = "stdsimd")]
+fn residual_city_block_distance(
+    v1: &[VectorElementType],
+    v2: &[VectorElementType],
+) -> VectorElementType {
+    v1.iter().zip(v2.iter()).map(|(a, b)| (a - b).abs()).sum()
 }
 
 #[cfg(feature = "stdsimd")]
@@ -56,7 +64,8 @@ pub fn city_block_distance_f32_simd(v1: &[f32], v2: &[f32]) -> ScoreType {
     let nb_simd = v1.len() / nb_lanes;
     let simd_length = nb_simd * nb_lanes;
 
-    let dist_simd = v1.chunks_exact(nb_lanes)
+    let dist_simd = v1
+        .chunks_exact(nb_lanes)
         .map(f32x16::from_slice_aligned)
         .zip(v2.chunks_exact(nb_lanes).map(f32x16::from_slice_unaligned))
         .map(|(a, b)| (a - b).abs())
@@ -68,8 +77,7 @@ pub fn city_block_distance_f32_simd(v1: &[f32], v2: &[f32]) -> ScoreType {
     dist
 }
 
-
-#[cfg(feature = "simdeez_f")]
+#[cfg(all(feature = "simdeez_f", target_arch = "x86_64"))]
 unsafe fn distance_l1_f32<S: Simd>(v1: &[f32], v2: &[f32]) -> f32 {
     assert_eq!(v1.len(), v2.len());
     let mut dist_simd = S::setzero_ps();
@@ -98,32 +106,31 @@ unsafe fn distance_l1_f32_avx2(va: &[f32], vb: &[f32]) -> f32 {
     distance_l1_f32::<Avx2>(va, vb)
 }
 
-impl Metric<f32> for CityBlockMetric {
+impl Metric<VectorElementType> for CityBlockMetric {
     fn distance() -> Distance {
         DistanceMetric::CityBlock
     }
 
-    fn similarity(v1: &[f32], v2: &[f32]) -> ScoreType {
+    fn similarity(v1: &[VectorElementType], v2: &[VectorElementType]) -> ScoreType {
         cfg_if::cfg_if! {
         if #[cfg(feature = "simdeez_f")] {
             #[cfg(any(target_arch = "x86", target_arch = "x86_64"))] {
                 if is_x86_feature_detected!("avx2") {
-                    return unsafe {distance_l1_f32_avx2(va,vb)};
+                     return unsafe {distance_l1_f32_avx2(v1,v2)}
                 }
                 else {
                     assert_eq!(v1.len(), v1.len());
-                    v1.iter().zip(v1.iter()).map(|t| (*t.0 as f32- *t.1 as f32).abs()).sum()
+                    return v1.iter().zip(v1.iter()).map(|t| (*t.0 as f32- *t.1 as f32).abs()).sum();
                 }
             }
            #[cfg(target_arch = "aarch64")] {
-                else {
-                    assert_eq!(v1.len(), v2.len());
-                    v1.iter().zip(v2.iter()).map(|t| (*t.0 as f32- *t.1 as f32).abs()).sum()
-                 }
+                return unsafe{
+                    city_block_similarity_neon(v1, v2)
+                }
             }
         }
         else if #[cfg(feature = "stdsimd")] {
-            distance_l1_f32_simd(v1,v2)
+                return city_block_distance_f32_simd(v1, v2);
             }
         else {
             v1.iter().zip(v2.iter()).map(|t| (*t.0 as f32- *t.1 as f32).abs()).sum()
@@ -131,7 +138,7 @@ impl Metric<f32> for CityBlockMetric {
         }
     }
 
-    fn preprocess(vector: Vec<f32>) -> Vec<f32> {
+    fn preprocess(vector: Vec<VectorElementType>) -> Vec<VectorElementType> {
         vector
     }
 
@@ -140,11 +147,11 @@ impl Metric<f32> for CityBlockMetric {
     }
 }
 
-
 mod tests {
-    use crate::types::vector::VectorElementType;
-
-    use super::*;
+    use crate::{
+        spaces::metrics::{CityBlockMetric, Metric},
+        types::vector::VectorElementType,
+    };
 
     #[test]
     fn test_city_block_metric() {
