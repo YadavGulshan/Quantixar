@@ -6,7 +6,7 @@ edition = "2021"
 
 [features]
 
-default = []
+default = ["stdsimd"]
 # simd on x86/x86_64
 simdeez_f = ["simdeez"]
 # a beta feature experimental

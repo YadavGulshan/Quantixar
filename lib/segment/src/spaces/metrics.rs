@@ -1,5 +1,11 @@
+#[cfg(any(
+    target_arch = "x86",
+    target_arch = "x86_64",
+    all(target_arch = "aarch64", target_feature = "neon")
+))]
+use crate::spaces::MIN_DIM_SIZE_SIMD;
 use crate::types::distance::{Distance, ScoreType};
-use crate::types::vector::{VectorElementType, VectorType};
+use crate::types::vector::{VectorElementType};
 
 use super::distance::{dot_similarity, euclid_similarity};
 
@@ -7,14 +13,6 @@ use super::distance::{dot_similarity, euclid_similarity};
 use super::neon::dot_neon_similarity;
 #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
 use crate::spaces::neon::euclidian_neon_similarity;
-
-/// Minimal size of vector for SIMD processing
-#[cfg(any(
-    target_arch = "x86",
-    target_arch = "x86_64",
-    all(target_arch = "aarch64", target_feature = "neon")
-))]
-const MIN_DIM_SIZE_SIMD: usize = 16;
 
 pub trait Metric<T: Send + Sync> {
     fn distance() -> Distance;

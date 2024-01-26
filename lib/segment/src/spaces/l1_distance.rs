@@ -1,19 +1,23 @@
 use cfg_if;
 #[cfg(feature = "stdsimd")]
 use packed_simd::*;
-
 #[cfg(feature = "simdeez_f")]
 use simdeez::*;
-
 #[cfg(feature = "simdeez_f")]
-#[cfg(target_arch = "x86_64")]
 use simdeez::avx2::*;
-
-#[cfg(target_feature = "neon")]
-use std::arch::aarch64::*;
+#[cfg(feature = "simdeez_f")]
+use simdeez::sse2::*;
 
 use crate::spaces::distance::DistanceMetric;
 use crate::spaces::metrics::{CityBlockMetric, Metric};
+#[cfg(target_arch = "x86_64")]
+use crate::spaces::MIN_DIM_SIZE_AVX;
+#[cfg(any(
+target_arch = "x86",
+target_arch = "x86_64",
+all(target_arch = "aarch64", target_feature = "neon")
+))]
+use crate::spaces::MIN_DIM_SIZE_SIMD;
 #[cfg(target_feature = "neon")]
 use crate::spaces::neon::city_block_similarity_neon;
 use crate::types::distance::{Distance, ScoreType};
@@ -50,7 +54,6 @@ implement_city_block_metric!(u32);
 implement_city_block_metric!(u16);
 implement_city_block_metric!(u8);
 
-#[cfg(feature = "stdsimd")]
 fn residual_city_block_distance(
     v1: &[VectorElementType],
     v2: &[VectorElementType],
@@ -64,7 +67,7 @@ pub fn city_block_distance_f32_simd(v1: &[f32], v2: &[f32]) -> ScoreType {
     let nb_simd = v1.len() / nb_lanes;
     let simd_length = nb_simd * nb_lanes;
 
-    let dist_simd = v1
+    let dist_simd: f32x16 = v1
         .chunks_exact(nb_lanes)
         .map(f32x16::from_slice_aligned)
         .zip(v2.chunks_exact(nb_lanes).map(f32x16::from_slice_unaligned))
@@ -77,8 +80,8 @@ pub fn city_block_distance_f32_simd(v1: &[f32], v2: &[f32]) -> ScoreType {
     dist
 }
 
-#[cfg(all(feature = "simdeez_f", target_arch = "x86_64"))]
-unsafe fn distance_l1_f32<S: Simd>(v1: &[f32], v2: &[f32]) -> f32 {
+#[cfg(all(feature = "simdeez_f"))]
+unsafe fn distance_l1_f32_simd<S: Simd>(v1: &[f32], v2: &[f32]) -> f32 {
     assert_eq!(v1.len(), v2.len());
     let mut dist_simd = S::setzero_ps();
     let nb_simd = v1.len() / S::VF32_WIDTH;
@@ -100,50 +103,61 @@ unsafe fn distance_l1_f32<S: Simd>(v1: &[f32], v2: &[f32]) -> f32 {
 }
 
 #[cfg(feature = "simdeez_f")]
-#[target_feature(enable = "avx2")]
-#[cfg(target_arch = "x86_64")]
-unsafe fn distance_l1_f32_avx2(va: &[f32], vb: &[f32]) -> f32 {
-    distance_l1_f32::<Avx2>(va, vb)
+fn distance_l1_f32_simdeez_f(va: &[f32], vb: &[f32]) -> f32 {
+    #[cfg(target_arch = "x86_64")] unsafe {
+        if is_x86_feature_detected!("avx")
+            && is_x86_feature_detected!("fma")
+            && va.len() >= MIN_DIM_SIZE_AVX
+        {
+            distance_l1_f32_simd::<Avx2>(va, vb)
+        } else if is_x86_feature_detected!("sse")
+            && va.len() >= MIN_DIM_SIZE_SIMD {
+            distance_l1_f32_simd::<Sse2>(va, vb)
+        }
+    }
+    distance_l1_f32(va, vb)
 }
+
+#[cfg(feature = "stdsimd")]
+fn city_block_distance_std_f32(va: &[f32], vb: &[f32]) -> ScoreType {
+    #[cfg(target_arch = "aarch64")] unsafe {
+        if std::arch::aarch64::is_aarch64_feature_detected!("neon")
+            && va.len() >= MIN_DIM_SIZE_SIMD
+        {
+            return city_block_similarity_neon(va, vb);
+        }
+    }
+    return city_block_distance_f32_simd(va, vb);
+}
+
+
+fn distance_l1_f32(v1: &[f32], v2: &[f32]) -> f32 {
+    assert_eq!(v1.len(), v2.len());
+    v1.iter()
+        .zip(v2.iter())
+        .map(|t| (*t.0 - *t.1).abs())
+        .sum()
+}
+
 
 impl Metric<VectorElementType> for CityBlockMetric {
     fn distance() -> Distance {
         DistanceMetric::CityBlock
     }
-
     fn similarity(v1: &[VectorElementType], v2: &[VectorElementType]) -> ScoreType {
-        cfg_if::cfg_if! {
-        if #[cfg(feature = "simdeez_f")] {
-            #[cfg(any(target_arch = "x86", target_arch = "x86_64"))] {
-                if is_x86_feature_detected!("avx2") {
-                     return unsafe {distance_l1_f32_avx2(v1,v2)}
-                }
-                else {
-                    assert_eq!(v1.len(), v1.len());
-                    return v1.iter().zip(v1.iter()).map(|t| (*t.0 as f32- *t.1 as f32).abs()).sum();
-                }
-            }
-           #[cfg(target_arch = "aarch64")] {
-                return unsafe{
-                    city_block_similarity_neon(v1, v2)
-                }
-            }
+        #[cfg(feature = "simdeez_f")] {
+            return unsafe { distance_l1_f32_simdeez_f(v1, v2) };
         }
-        else if #[cfg(feature = "stdsimd")] {
-                return city_block_distance_f32_simd(v1, v2);
-            }
-        else {
-            v1.iter().zip(v2.iter()).map(|t| (*t.0 as f32- *t.1 as f32).abs()).sum()
-            }
+        #[cfg(feature = "stdsimd")] {
+            return unsafe { city_block_distance_std_f32(v1, v2) };
         }
     }
-
     fn preprocess(vector: Vec<VectorElementType>) -> Vec<VectorElementType> {
         vector
     }
 
     fn postprocess(score: ScoreType) -> ScoreType {
-        score
+        score.abs()
     }
 }
 

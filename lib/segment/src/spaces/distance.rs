@@ -1,6 +1,6 @@
-use common::types::ScoreType;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use crate::types::distance::ScoreType;
 
 use crate::types::vector::VectorElementType;
 
