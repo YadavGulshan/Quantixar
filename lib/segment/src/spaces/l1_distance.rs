@@ -14,6 +14,7 @@ use std::arch::aarch64::*;
 
 use crate::spaces::distance::DistanceMetric;
 use crate::spaces::metrics::{CityBlockMetric, Metric};
+#[cfg(target_feature = "neon")]
 use crate::spaces::neon::city_block_similarity_neon;
 use crate::types::distance::{Distance, ScoreType};
 use crate::types::vector::VectorElementType;
