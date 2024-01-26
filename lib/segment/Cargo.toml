@@ -22,8 +22,6 @@ proptest = "1.4.0"
 tempfile = "3.8.1"
 
 [dependencies]
-quantization = { git = "https://github.com/qdrant/quantization.git" }
-
 tinyvec = { version = "1.6.0", features = ["alloc"] }
 ndarray = { version = "0.15" }
 ndarray-rand = "0.14.0"
