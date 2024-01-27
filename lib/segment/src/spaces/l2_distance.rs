@@ -88,7 +88,6 @@ unsafe fn euclid_distance_f32_simdeez_f<S: Simd>(v1: &[f32], v2: &[f32]) -> f32 
         let mut delta = a - b;
         delta *= delta;
         dist_simd = dist_simd + delta;
-        //
         i += S::VF32_WIDTH;
     }
     let mut dist = S::horizontal_add_ps(dist_simd);

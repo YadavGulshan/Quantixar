@@ -5,7 +5,8 @@ pub mod metrics;
 #[cfg(target_arch = "aarch64")]
 pub mod neon;
 pub mod l2_distance;
-
+mod cosine_distance;
+mod dot_product;
 
 
 #[cfg(target_arch = "x86_64")]

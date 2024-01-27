@@ -73,7 +73,7 @@ pub fn city_block_distance_f32_simd(v1: &[f32], v2: &[f32]) -> ScoreType {
 }
 
 #[cfg(all(feature = "simdeez_f"))]
-unsafe fn distance_l1_f32_simd<S: Simd>(v1: &[f32], v2: &[f32]) -> f32 {
+unsafe fn distance_l1_f32_simd<S: Simd>(v1: &[f32], v2: &[f32]) -> ScoreType {
     assert_eq!(v1.len(), v2.len());
     let mut dist_simd = S::setzero_ps();
     let nb_simd = v1.len() / S::VF32_WIDTH;
@@ -96,16 +96,16 @@ unsafe fn distance_l1_f32_simd<S: Simd>(v1: &[f32], v2: &[f32]) -> f32 {
 }
 
 #[cfg(feature = "simdeez_f")]
-fn distance_l1_f32_simdeez_f(va: &[f32], vb: &[f32]) -> f32 {
+fn distance_l1_f32_simdeez_f(va: &[f32], vb: &[f32]) -> ScoreType {
     #[cfg(target_arch = "x86_64")] unsafe {
         if is_x86_feature_detected!("avx")
             && is_x86_feature_detected!("fma")
             && va.len() >= MIN_DIM_SIZE_AVX
         {
-            distance_l1_f32_simd::<Avx2>(va, vb)
+            return distance_l1_f32_simd::<Avx2>(va, vb);
         } else if is_x86_feature_detected!("sse")
             && va.len() >= MIN_DIM_SIZE_SIMD {
-            distance_l1_f32_simd::<Sse2>(va, vb)
+            return distance_l1_f32_simd::<Sse2>(va, vb);
         }
     }
     distance_l1_f32(va, vb)
