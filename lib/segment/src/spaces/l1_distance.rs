@@ -1,4 +1,3 @@
-use cfg_if;
 #[cfg(feature = "stdsimd")]
 use packed_simd::*;
 #[cfg(feature = "simdeez_f")]
@@ -54,13 +53,6 @@ implement_city_block_metric!(u32);
 implement_city_block_metric!(u16);
 implement_city_block_metric!(u8);
 
-fn residual_city_block_distance(
-    v1: &[VectorElementType],
-    v2: &[VectorElementType],
-) -> VectorElementType {
-    v1.iter().zip(v2.iter()).map(|(a, b)| (a - b).abs()).sum()
-}
-
 #[cfg(feature = "stdsimd")]
 pub fn city_block_distance_f32_simd(v1: &[f32], v2: &[f32]) -> ScoreType {
     let nb_lanes = 16;
@@ -74,9 +66,9 @@ pub fn city_block_distance_f32_simd(v1: &[f32], v2: &[f32]) -> ScoreType {
         .map(|(a, b)| (a - b).abs())
         .sum();
     let mut dist = dist_simd.sum();
-    let dist_residual = residual_city_block_distance(&v1[simd_length..], &v2[simd_length..]);
-    dist += dist_residual;
-
+    for i in simd_length..v1.len() {
+        dist += (v1[i] - v2[i]).abs();
+    }
     dist
 }
 
@@ -96,8 +88,9 @@ unsafe fn distance_l1_f32_simd<S: Simd>(v1: &[f32], v2: &[f32]) -> f32 {
         i += S::VF32_WIDTH;
     }
     let mut dist: f32 = S::horizontal_add_ps(dist_simd);
-    let dist_residual = residual_city_block_distance(&v1[simd_length..], &v2[simd_length..]);
-    dist += dist_residual;
+    for i in simd_length..v1.len() {
+        dist += (v1[i] - v2[i]).abs();
+    }
 
     dist
 }
@@ -149,7 +142,7 @@ impl Metric<VectorElementType> for CityBlockMetric {
             return unsafe { distance_l1_f32_simdeez_f(v1, v2) };
         }
         #[cfg(feature = "stdsimd")] {
-            return unsafe { city_block_distance_std_f32(v1, v2) };
+            return city_block_distance_std_f32(v1, v2);
         }
     }
     fn preprocess(vector: Vec<VectorElementType>) -> Vec<VectorElementType> {
