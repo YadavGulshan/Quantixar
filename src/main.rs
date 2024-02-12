@@ -1,7 +1,8 @@
-mod engine;
 mod common;
+mod engine;
 mod utils;
 
-fn main() {
+fn main()
+{
     println!("Hello, world!");
 }
