@@ -1,3 +1,4 @@
+workspace = { members = ["lib/common",] }
 [package]
 name = "quantixar"
 version = "0.1.0"
@@ -5,6 +6,14 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+http = ["actix-web"]
+
+[features]
+http = ["actix-web"]
+default = ["rock"]
+rock = ["rocksdb"]
+etcdb = ["etcd"]
 [dependencies]
 etcd = { version = "0.9.0", optional = true }
 faiss = { version = "0.12.1" }
