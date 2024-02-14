@@ -1,14 +1,19 @@
 mod common;
 mod engine;
+#[cfg(feature = "http")]
+mod http;
 mod utils;
 
 use std::env;
 
+use http::init;
 use tracing::{event, Level};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     tracing_subscriber();
+    init().await.unwrap();
 }
 
 fn tracing_subscriber() {
