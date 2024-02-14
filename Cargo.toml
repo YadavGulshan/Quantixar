@@ -9,7 +9,6 @@ edition = "2021"
 etcd = { version = "0.9.0", optional = true }
 faiss = { version = "0.12.1" }
 rocksdb = { version = "0.21.0", default-features = false, features = ["snappy"], optional = true }
-quantization = { git = "https://github.com/qdrant/quantization.git", branch = "master" }
 atomic_refcell = "0.1.13"
 atomicwrites = "0.4.2"
 memmap2 = "0.9.0"
@@ -43,7 +42,7 @@ procfs = { version = "0.16", default-features = false }
 io-uring = "0.6.2"
 
 [features]
-default = ["rock"]
+default = []
 rock = ["rocksdb"]
 etcdb = ["etcd"]
 
