@@ -1,3 +1,4 @@
+#[cfg(feature = "rock")]
 use rocksdb::{
     DBRecoveryMode,
     LogLevel,
@@ -5,13 +6,17 @@ use rocksdb::{
 };
 
 use crate::common::operation_error::OperationResult;
-
+#[cfg(feature = "rock")]
 mod rocksdb_buffered_delete_wrapper;
+#[cfg(feature = "rock")]
 mod rocksdb_wrapper;
+#[cfg(feature = "rock")]
 mod storage_manager;
+#[cfg(feature = "rock")]
 mod storage_mgr_opts;
+#[cfg(feature = "rock")]
 mod storage_mgr_trait;
-
+#[cfg(feature = "rock")]
 pub type Flusher = Box<dyn FnOnce() -> OperationResult<()> + Send>;
 
 const DB_CACHE_SIZE: usize = 10 * 1024 * 1024;
@@ -26,6 +31,7 @@ pub const DB_PAYLOAD_CF: &str = "payload";
 pub const DB_MAPPING_CF: &str = "mapping";
 pub const DB_VERSIONS_CF: &str = "version";
 
+#[cfg(feature = "rock")]
 pub fn db_options() -> Options
 {
     let mut options: Options = Options::default();

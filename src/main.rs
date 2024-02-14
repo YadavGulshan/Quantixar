@@ -7,13 +7,8 @@ use std::env;
 use tracing::{event, Level};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
-#[cfg(feature = "http")]
-mod actix;
-
 fn main() {
     tracing_subscriber();
-    #[cfg(feature = "http")]
-    actix::init().unwrap();
 }
 
 fn tracing_subscriber() {

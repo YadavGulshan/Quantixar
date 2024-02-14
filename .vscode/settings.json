@@ -1,0 +1,4 @@
+{
+  "rust-analyzer.cargo.features": ["default"],
+  "cSpell.words": ["actix", "Quantixar"]
+}

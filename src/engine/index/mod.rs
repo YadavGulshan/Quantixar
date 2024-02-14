@@ -1,3 +1,2 @@
-mod index;
-mod ivf;
+pub mod index;
 mod retrieval;
