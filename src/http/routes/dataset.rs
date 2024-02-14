@@ -31,6 +31,13 @@ impl DataSet {
   }
 }
 
+ #[utoipa::path(
+        get,
+        path = "/dataset",
+        responses(
+            (status = 200, description = "List all DataSet successfully", body = [DataSet])
+        )
+ )]
 pub(crate) async fn list_datasets() -> Json<Vec<DataSet>> {
   let data_sets: Vec<DataSet> = vec![
     DataSet {
@@ -43,6 +50,6 @@ pub(crate) async fn list_datasets() -> Json<Vec<DataSet>> {
 }
 
 pub(crate) async fn create_data_set(Json(params): Json<DataSet>) -> impl IntoResponse {
-  let data_set = crate::http::hanlders::dataset::DataSet::new(params.user_id, params.name, params.description);
+  let data_set = DataSet::new(params.user_id, params.name, params.description);
   Json(data_set)
 }
