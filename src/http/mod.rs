@@ -14,12 +14,7 @@ pub mod routes;
 pub mod hanlders;
 
 #[derive(OpenApi)]
-#[openapi(paths(
-paths(
-routes::dataset::list_datasets,
-routes::dataset::create_data_set
-)
-))]
+#[openapi()]
 struct ApiDoc;
 
 pub async fn init() -> Result<(), Error> {
