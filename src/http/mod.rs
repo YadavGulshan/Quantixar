@@ -2,22 +2,41 @@ pub mod errors;
 pub mod hanlders;
 pub mod routes;
 
-use std::io::Error;
-use std::net::{Ipv4Addr, SocketAddr};
+use std::{
+    io::Error,
+    net::{
+        Ipv4Addr,
+        SocketAddr,
+    },
+};
 
 use axum::Router;
 use routes::dataset;
-use tokio::{net::TcpListener, signal};
-use tower_http::cors::{Any, CorsLayer};
+use tokio::{
+    net::TcpListener,
+    signal,
+};
+use tower_http::cors::{
+    Any,
+    CorsLayer,
+};
 use utoipa::OpenApi;
 use utoipa_rapidoc::RapiDoc;
-use utoipa_redoc::{Redoc, Servable};
+use utoipa_redoc::{
+    Redoc,
+    Servable,
+};
 use utoipa_swagger_ui::SwaggerUi;
+
 #[derive(OpenApi)]
-#[openapi(paths(dataset::list_datasets), components(schemas(dataset::DataSet)))]
+#[openapi(
+    paths(dataset::list_datasets, dataset::create_dataset),
+    components(schemas(dataset::DataSet))
+)]
 struct ApiDoc;
 
-pub async fn init() -> Result<(), Error> {
+pub async fn init() -> Result<(), Error>
+{
     let cors = CorsLayer::default().allow_origin(Any).allow_headers(Any).allow_methods(Any);
     let dataset_api = routes::dataset::data_set_router();
     let app = Router::new()
@@ -33,7 +52,8 @@ pub async fn init() -> Result<(), Error> {
     axum::serve(listener, app.into_make_service()).await
 }
 
-async fn shutdown_signal() {
+async fn shutdown_signal()
+{
     let ctrl_c = async {
         signal::ctrl_c().await.expect("failed to install Ctrl+C handler");
     };

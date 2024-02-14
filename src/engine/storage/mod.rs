@@ -15,8 +15,6 @@ mod storage_manager;
 #[cfg(feature = "rock")]
 mod storage_mgr_opts;
 #[cfg(feature = "rock")]
-mod storage_mgr_trait;
-#[cfg(feature = "rock")]
 pub type Flusher = Box<dyn FnOnce() -> OperationResult<()> + Send>;
 
 const DB_CACHE_SIZE: usize = 10 * 1024 * 1024;

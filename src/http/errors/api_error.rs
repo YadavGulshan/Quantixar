@@ -1,6 +1,10 @@
+use std::borrow::Cow;
+
 use axum::{extract::rejection::JsonRejection, response::IntoResponse, Json};
+use hyper::StatusCode;
 use serde_json::json;
 use thiserror::Error;
+use tower_http::BoxError;
 
 #[derive(Debug, Error)]
 pub enum ApiError {
@@ -35,4 +39,23 @@ impl IntoResponse for ApiError {
         tracing::error!("Error: {}", message);
         (status, Json(payload)).into_response()
     }
+}
+
+
+pub async fn handle_error(error: BoxError) -> impl IntoResponse {
+    if error.is::<tower::timeout::error::Elapsed>() {
+        return (StatusCode::REQUEST_TIMEOUT, Cow::from("request timed out"));
+    }
+
+    if error.is::<tower::load_shed::error::Overloaded>() {
+        return (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Cow::from("service is overloaded, try again later"),
+        );
+    }
+
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Cow::from(format!("Unhandled internal error: {error}")),
+    )
 }

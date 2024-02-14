@@ -1,3 +1,5 @@
+#![allow(unused_imports, dead_code, unused_variables)]
+
 use std::env;
 
 use tracing::{event, Level};

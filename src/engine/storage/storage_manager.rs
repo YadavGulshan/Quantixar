@@ -41,7 +41,7 @@ impl StorageManager
         for vector_path in vector_paths {
             column_families.push(vector_path.as_ref());
         }
-        let db = DB::open_cf(&db_options(), path, column_families)?;
+        let db = DB::open_cf(&db_options(), path, column_families).unwrap();
         Self {
             db_column_wrapper: DatabaseColumnWrapper {
                 database: Arc::new(RwLock::new(db)),
@@ -50,7 +50,7 @@ impl StorageManager
         }
     }
 
-    pub fn check_db_exists(path: &Path) -> bool
+    pub fn check_db_exists(&self, path: &Path) -> bool
     {
         let db_file = path.join("CURRENT");
         db_file.exists()
