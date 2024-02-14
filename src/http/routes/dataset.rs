@@ -21,6 +21,16 @@ pub struct DataSet {
   description: String,
 }
 
+impl DataSet {
+  pub fn new(user_id: String, name: String, description: String) -> Self {
+    Self {
+      user_id,
+      name,
+      description,
+    }
+  }
+}
+
 pub(crate) async fn list_datasets() -> Json<Vec<DataSet>> {
   let data_sets: Vec<DataSet> = vec![
     DataSet {
