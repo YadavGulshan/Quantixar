@@ -1,10 +1,12 @@
+use std::path::Path;
+
 use axum::{
     error_handling::HandleErrorLayer,
     extract::{
         DefaultBodyLimit,
         Multipart,
     },
-    response::IntoResponse,
+    response::{Html, IntoResponse},
     routing::{
         self,
         get,
@@ -13,6 +15,7 @@ use axum::{
     Json,
     Router,
 };
+use chrono::format;
 use hyper::StatusCode;
 use serde::{
     Deserialize,
@@ -29,13 +32,18 @@ use utoipa::{
 };
 
 use crate::http::errors::api_error::handle_error;
+use hdf5::{
+    File,
+    H5Type,
+    Result,
+};
 
 pub fn data_set_router() -> Router
 {
     Router::new()
         .route(
-            "/dataset",
-            axum::routing::get(list_datasets).post(create_dataset),
+            "/",
+            axum::routing::get(show_form).post(create_dataset),
         )
         .layer(DefaultBodyLimit::disable())
         .layer(RequestBodyLimitLayer::new(512 * 1024 * 1024))
@@ -64,7 +72,6 @@ pub struct DataSet
     description: String,
     datatype: DataType,
 }
-
 
 impl DataSet
 {
@@ -97,9 +104,27 @@ pub async fn list_datasets() -> Json<Vec<DataSet>>
     Json(data_sets)
 }
 
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct UploadedFile
+{
+    pub filename: String,
+    pub data: Vec<u8>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct FileUpload {
+    file: UploadedFile,
+}
+
+pub struct HDF5FileConfig<'a>
+{
+    pub dataset_name: &'a str,
+    pub target_data_path: &'a str,
+}
+
 #[utoipa::path(
     post,
-    path = "/dataset",
+    path = "/",
     request_body = Multipart,
     responses(
         (status = 200, description = "DataSet created successfully", body = String),
@@ -115,14 +140,56 @@ pub async fn create_dataset(mut multipart: Multipart) -> impl IntoResponse
             let data = field.bytes().await.unwrap();
             Some(UploadedFile {
                 filename: name,
-                data,
+                data: data.to_vec(),
             })
         } else {
             None
         }
     };
-    if file.is_some() {
-        return (StatusCode::OK, "DataSet created successfully")
+    if file.is_none() {
+        return (StatusCode::BAD_REQUEST, "Bad Request");
     }
-    return (StatusCode::BAD_REQUEST, "Bad Request")
+    // Save data to /tmp
+    let file = file.unwrap();
+    let file_path = format!("/tmp/{}", file.filename);
+    std::fs::write(file_path.as_str(), file.data).unwrap();
+
+    read_hdf5(&file_path, HDF5FileConfig {
+        dataset_name: "data",
+        target_data_path: "test",
+    }).unwrap();
+
+    (StatusCode::OK, "DataSet created successfully")
+}
+
+pub fn read_hdf5(file_path: &str, config: HDF5FileConfig) -> Result<()>
+{
+    let file = File::open(file_path)?;
+    let dataset = file.dataset(config.target_data_path)?;
+    println!("{:?}", dataset.read_raw::<f32>()?);
+    // let attr = dataset.attr("/test")?;
+    // println!("{:?}", attr.read_1d::<f32>()?.as_slice());
+    Ok(())
+}
+
+
+async fn show_form() -> Html<&'static str> {
+    Html(
+        r#"
+        <!doctype html>
+        <html>
+            <head></head>
+            <body>
+                <form action="/" method="post" enctype="multipart/form-data">
+                    <label>
+                        Upload file:
+                        <input type="file" name="file" multiple>
+                    </label>
+
+                    <input type="submit" value="Upload files">
+                </form>
+            </body>
+        </html>
+        "#,
+    )
 }

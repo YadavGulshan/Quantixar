@@ -7,7 +7,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["rock"]
+default = []
 rock = ["rocksdb"]
 etcdb = ["etcd"]
 
@@ -21,6 +21,7 @@ atomic_refcell = "0.1.13"
 atomicwrites = "0.4.2"
 memmap2 = "0.9.0"
 sysinfo = "0.29.11"
+hdf5 = {version = "0.8"}
 
 thiserror = "1.0.56"
 log = { version = "0.4.20", features = [] }
@@ -66,6 +67,8 @@ tower = { version = "0.4.13", features = ["timeout", "limit", "load-shed"] }
 cgroups-rs = "0.3"
 procfs = { version = "0.16", default-features = false }
 io-uring = "0.6.2"
+
+
 
 [profile.dev]
 incremental = true

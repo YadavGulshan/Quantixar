@@ -31,7 +31,7 @@ use utoipa_swagger_ui::SwaggerUi;
 #[derive(OpenApi)]
 #[openapi(
     paths(dataset::list_datasets, dataset::create_dataset),
-    components(schemas(dataset::DataSet))
+    components(schemas(dataset::DataSet), schemas(dataset::FileUpload))
 )]
 struct ApiDoc;
 
