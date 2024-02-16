@@ -4,56 +4,49 @@ pub mod routes;
 
 use std::{
     io::Error,
-    net::{
-        Ipv4Addr,
-        SocketAddr,
-    },
+    net::{Ipv4Addr, SocketAddr},
 };
 
+use actix_cors::Cors;
+use actix_web::{
+    get,
+    middleware::{Compress, Logger},
+    App, HttpResponse, HttpServer, Responder,
+};
 use axum::Router;
-use routes::dataset;
-use tokio::{
-    net::TcpListener,
-    signal,
-};
-use tower_http::cors::{
-    Any,
-    CorsLayer,
-};
+use routes::dataset_api;
+use serde_json::json;
+use tokio::{net::TcpListener, signal};
+use tower_http::cors::{Any, CorsLayer};
+use tracing::info;
 use utoipa::OpenApi;
 use utoipa_rapidoc::RapiDoc;
-use utoipa_redoc::{
-    Redoc,
-    Servable,
-};
+use utoipa_redoc::{Redoc, Servable};
 use utoipa_swagger_ui::SwaggerUi;
 
-#[derive(OpenApi)]
-#[openapi(
-    paths(dataset::list_datasets, dataset::create_dataset),
-    components(schemas(dataset::DataSet), schemas(dataset::FileUpload))
-)]
-struct ApiDoc;
+use crate::{
+    http::routes::{index_api::config_index_api, swagger_api::config_swagger_ui},
+    setting::Settings,
+};
 
-pub async fn init() -> Result<(), Error>
-{
-    let cors = CorsLayer::default().allow_origin(Any).allow_headers(Any).allow_methods(Any);
-    let dataset_api = routes::dataset::data_set_router();
-    let app = Router::new()
-        .layer(cors)
-        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
-        .merge(Redoc::with_url("/redoc", ApiDoc::openapi()))
-        .merge(RapiDoc::new("/api-docs/openapi.json").path("/rapidoc"))
-        .nest("/", dataset_api);
-
-    let address = SocketAddr::from((Ipv4Addr::UNSPECIFIED, 8945));
-    let listener = TcpListener::bind(&address).await?;
-    log::info!("Listening on {}", address);
-    axum::serve(listener, app.into_make_service()).await
+pub async fn init(settings: Settings) -> Result<(), Error> {
+    let server = HttpServer::new(move || {
+        let cors = Cors::default().allow_any_header().allow_any_method().allow_any_origin();
+        App::new()
+            .wrap(Compress::default())
+            .wrap(cors)
+            .wrap(Logger::default().exclude("/"))
+            .configure(config_index_api)
+            .configure(config_swagger_ui)
+    });
+    let port = settings.service.http_port;
+    let host = settings.service.host;
+    let addr = SocketAddr::new(Ipv4Addr::new(127, 0, 0, 1).into(), port);
+    info!("Starting server at http://{}", addr);
+    server.bind(addr)?.run().await
 }
 
-async fn shutdown_signal()
-{
+async fn shutdown_signal() {
     let ctrl_c = async {
         signal::ctrl_c().await.expect("failed to install Ctrl+C handler");
     };
