@@ -4,3 +4,4 @@ pub mod toc;
 mod types;
 mod utils;
 mod search;
+mod table;
