@@ -1,34 +1,22 @@
-use std::path::Path;
-
-use axum::{
-    error_handling::HandleErrorLayer,
-    extract::{DefaultBodyLimit, Multipart},
-    response::{Html, IntoResponse},
-    routing::{self, get},
-    Extension, Json, Router,
+use std::{
+    io::{Error, Read, Write},
+    path::Path,
 };
+
+use crate::http::handlers::dataset::read_hdf5;
+use actix_multipart::{
+    form::{tempfile::TempFile, MultipartForm},
+    Multipart,
+};
+use actix_web::{http::StatusCode, post, HttpResponse, Responder};
+
 use chrono::format;
-use hyper::StatusCode;
+use hdf5::{File as Hdf5File, H5Type, Result};
 use serde::{Deserialize, Serialize};
 use tower::{Layer, ServiceBuilder};
 use tower_http::limit::RequestBodyLimitLayer;
-use utoipa::{openapi::request_body::RequestBodyBuilder, ToSchema};
-
-use crate::http::errors::api_error::handle_error;
-use hdf5::{File, H5Type, Result};
-
-pub fn data_set_router() -> Router {
-    Router::new()
-        .route("/", axum::routing::get(show_form).post(create_dataset))
-        .layer(DefaultBodyLimit::disable())
-        .layer(RequestBodyLimitLayer::new(512 * 1024 * 1024))
-        .layer(
-            ServiceBuilder::new()
-                .layer(HandleErrorLayer::new(handle_error))
-                .load_shed()
-                .concurrency_limit(1024),
-        )
-}
+use tracing::debug;
+use utoipa::{openapi::Components, ToSchema};
 
 #[derive(Serialize, Deserialize, ToSchema, Clone)]
 pub enum DataType {
@@ -57,32 +45,34 @@ impl DataSet {
     }
 }
 
-#[utoipa::path(
-        get,
-        path = "/dataset",
-        responses(
-            (status = 200, description = "List all DataSet successfully")
-        )
- )]
-pub async fn list_datasets() -> Json<Vec<DataSet>> {
-    let data_sets: Vec<DataSet> = vec![DataSet {
-        id: uuid::Uuid::new_v4(),
-        name: "name".to_string(),
-        description: "description".to_string(),
-        datatype: DataType::HDF5,
-    }];
-    Json(data_sets)
+// #[utoipa::path(
+//         get,
+//         path = "/dataset",
+//         responses(
+//             (status = 200, description = "List all DataSet successfully")
+//         )
+//  )]
+// pub async fn list_datasets() -> Json<Vec<DataSet>> {
+//     let data_sets: Vec<DataSet> = vec![DataSet {
+//         id: uuid::Uuid::new_v4(),
+//         name: "name".to_string(),
+//         description: "description".to_string(),
+//         datatype: DataType::HDF5,
+//     }];
+//     Json(data_sets)
+// }
+
+#[derive(Debug, ToSchema)]
+pub struct UploadedFile_SW {
+    #[schema( format = Binary)]
+    file: Vec<u8>,
 }
 
-#[derive(Serialize, Deserialize, ToSchema)]
+#[derive(Debug, MultipartForm, ToSchema)]
 pub struct UploadedFile {
-    pub filename: String,
-    pub data: Vec<u8>,
-}
-
-#[derive(Serialize, Deserialize, ToSchema)]
-pub struct FileUpload {
-    file: UploadedFile,
+    #[multipart(rename = "file")]
+    #[schema( format = Binary)]
+    file: TempFile,
 }
 
 pub struct HDF5FileConfig<'a> {
@@ -92,73 +82,33 @@ pub struct HDF5FileConfig<'a> {
 
 #[utoipa::path(
     post,
-    path = "/",
-    request_body = Multipart,
+    path = "/dataset",
+    request_body(
+        content_type = "multipart/form-data",
+        content = UploadedFile_SW
+    ),
     responses(
-        (status = 200, description = "DataSet created successfully", body = String),
-        (status = 400, description = "Bad Request"),
+        (status = 200, description = "DataSet created successfully")
     )
 )]
-pub async fn create_dataset(mut multipart: Multipart) -> impl IntoResponse {
-    let file: Option<UploadedFile> = {
-        let field = multipart.next_field().await;
-        if let Ok(Some(field)) = field {
-            let name = field.name().unwrap().to_string();
-            let data = field.bytes().await.unwrap();
-            Some(UploadedFile {
-                filename: name,
-                data: data.to_vec(),
-            })
-        } else {
-            None
-        }
-    };
-    if file.is_none() {
-        return (StatusCode::BAD_REQUEST, "Bad Request");
-    }
-    // Save data to /tmp
-    let file = file.unwrap();
-    let file_path = format!("/tmp/{}", file.filename);
-    std::fs::write(file_path.as_str(), file.data).unwrap();
-
+#[post("/dataset")]
+pub async fn create_dataset(
+    MultipartForm(form): MultipartForm<UploadedFile>,
+) -> Result<HttpResponse, Error> {
+    let file = form.file;
+    let file_path = file.file.path();
+    debug!("File path: {:?}", file_path);
     read_hdf5(
-        &file_path,
+        &file_path.to_str().unwrap(),
         HDF5FileConfig {
             dataset_name: "data",
             target_data_path: "test",
         },
     )
     .unwrap();
-
-    (StatusCode::OK, "DataSet created successfully")
+    Ok(HttpResponse::Ok().body("DataSet created successfully"))
 }
 
-pub fn read_hdf5(file_path: &str, config: HDF5FileConfig) -> Result<()> {
-    let file = File::open(file_path)?;
-    let dataset = file.dataset(config.target_data_path)?;
-    println!("{:?}", dataset.read_raw::<f32>()?);
-    // let attr = dataset.attr("/test")?;
-    // println!("{:?}", attr.read_1d::<f32>()?.as_slice());
-    Ok(())
-}
-
-async fn show_form() -> Html<&'static str> {
-    Html(
-        r#"
-        <!doctype html>
-        <html>
-            <head></head>
-            <body>
-                <form action="/" method="post" enctype="multipart/form-data">
-                    <label>
-                        Upload file:
-                        <input type="file" name="file" multiple>
-                    </label>
-
-                    <input type="submit" value="Upload files">
-                </form>
-            </body>
-        </html>
-        "#,
-    )
+pub fn config_dataset_api(cfg: &mut actix_web::web::ServiceConfig) {
+    cfg.service(create_dataset);
 }

@@ -1,5 +1,5 @@
 pub mod errors;
-pub mod hanlders;
+pub mod handlers;
 pub mod routes;
 
 use std::{
@@ -25,7 +25,10 @@ use utoipa_redoc::{Redoc, Servable};
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::{
-    http::routes::{index_api::config_index_api, swagger_api::config_swagger_ui},
+    http::routes::{
+        dataset_api::config_dataset_api, index_api::config_index_api,
+        swagger_api::config_swagger_ui,
+    },
     setting::Settings,
 };
 
@@ -38,6 +41,7 @@ pub async fn init(settings: Settings) -> Result<(), Error> {
             .wrap(Logger::default().exclude("/"))
             .configure(config_index_api)
             .configure(config_swagger_ui)
+            .configure(config_dataset_api)
     });
     let port = settings.service.http_port;
     let host = settings.service.host;
