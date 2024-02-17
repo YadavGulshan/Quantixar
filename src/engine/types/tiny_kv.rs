@@ -5,7 +5,7 @@ use tinyvec::TinyVec;
 pub const CAPACITY: usize = 3;
 
 #[derive(Clone, Debug, Default)]
-pub(crate) struct TinyMap<K, V>
+pub(crate) struct TinyKV<K, V>
 where
     K: Default,
     V: Default,
@@ -13,7 +13,7 @@ where
     list: TinyVec<[(K, V); CAPACITY]>,
 }
 
-impl<K, V> TinyMap<K, V>
+impl<K, V> TinyKV<K, V>
 where
     K: Default,
     V: Default,
@@ -61,7 +61,7 @@ where
     }
 }
 
-impl<K, V> TinyMap<K, V>
+impl<K, V> TinyKV<K, V>
 where
     K: Default + Eq,
     V: Default,
@@ -122,7 +122,7 @@ where
     }
 }
 
-impl<K, V> PartialEq for TinyMap<K, V>
+impl<K, V> PartialEq for TinyKV<K, V>
 where
     K: Default + Eq,
     V: Default + PartialEq,
@@ -142,7 +142,7 @@ where
     }
 }
 
-impl<K, V> IntoIterator for TinyMap<K, V>
+impl<K, V> IntoIterator for TinyKV<K, V>
 where
     K: Default,
     V: Default,
@@ -156,7 +156,7 @@ where
     }
 }
 
-impl<K, V> iter::FromIterator<(K, V)> for TinyMap<K, V>
+impl<K, V> iter::FromIterator<(K, V)> for TinyKV<K, V>
 where
     K: Default,
     V: Default,
@@ -175,7 +175,7 @@ mod tests {
     #[test]
     fn test_tiny_map_basic_operations() {
         // Create dummy data
-        let mut map: TinyMap<String, String> = TinyMap::new();
+        let mut map: TinyKV<String, String> = TinyKV::new();
         let key = "key".to_string();
         let mut value = "value".to_string();
         let key2 = "key2".to_string();

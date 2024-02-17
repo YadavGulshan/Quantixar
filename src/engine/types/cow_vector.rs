@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::common::operation_error::OperationError;
-use crate::engine::types::tiny_map;
+use crate::engine::types::tiny_kv;
 use crate::engine::types::types::{DenseVector, VectorElementType};
 use crate::engine::types::vector::{Vector, VectorRef};
 
@@ -19,7 +19,7 @@ impl<'a> Default for CowVector<'a> {
   }
 }
 
-pub(crate) type TinyMap<'a> = tiny_map::TinyMap<CowKey<'a>, CowVector<'a>>;
+pub(crate) type TinyMap<'a> = tiny_kv::TinyKV<CowKey<'a>, CowVector<'a>>;
 
 
 impl<'a> CowVector<'a> {
