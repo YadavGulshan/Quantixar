@@ -1,17 +1,16 @@
-use std::{
-  backtrace::Backtrace,
-  collections::TryReserveError,
-  io::{
-    Error as IoError,
-    ErrorKind,
-  },
-  sync::atomic::{
-    AtomicBool,
-    Ordering,
-  },
-};
+use std::{backtrace::Backtrace, collections::TryReserveError, io::{
+  Error as IoError,
+  ErrorKind,
+}, sync::atomic::{
+  AtomicBool,
+  Ordering,
+}};
+use std::fmt::Display;
 
+use actix_web::{HttpResponse, ResponseError};
+use actix_web::http::StatusCode;
 use atomicwrites::Error as AtomicIoError;
+use hdf5::Error;
 use rayon::ThreadPoolBuildError;
 use thiserror::Error;
 
@@ -205,5 +204,39 @@ impl From<TryReserveError> for OperationError
     }
   }
 }
+
+impl From<hdf5::Error> for OperationError {
+  fn from(value: Error) -> Self {
+    OperationError::ServiceError {
+      description: format!("HDF5 error: {value}"),
+      backtrace: Some(Backtrace::force_capture().to_string()),
+    }
+  }
+}
+
+impl ResponseError for OperationError {
+  fn status_code(&self) -> StatusCode {
+    match *self {
+      OperationError::WrongVector { .. } => StatusCode::BAD_REQUEST,
+      OperationError::VectorNameNotExists { .. } => StatusCode::NOT_FOUND,
+      OperationError::MissedVectorName { .. } => StatusCode::BAD_REQUEST,
+      OperationError::PointIdError { .. } => StatusCode::NOT_FOUND,
+      OperationError::TypeError { .. } => StatusCode::BAD_REQUEST,
+      OperationError::TypeInferenceError { .. } => StatusCode::BAD_REQUEST,
+      OperationError::ServiceError { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+      OperationError::InconsistentStorage { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+      OperationError::OutOfMemory { .. } => StatusCode::INSUFFICIENT_STORAGE,
+      OperationError::Cancelled { .. } => StatusCode::SERVICE_UNAVAILABLE,
+      OperationError::ValidationError { .. } => StatusCode::BAD_REQUEST,
+      OperationError::WrongSparse => StatusCode::BAD_REQUEST,
+    }
+  }
+  fn error_response(&self) -> HttpResponse {
+    HttpResponse::build(self.status_code())
+            .content_type("application/json")
+            .body(self.to_string())
+  }
+}
+
 
 pub type OperationResult<T> = Result<T, OperationError>;

@@ -7,7 +7,7 @@ use crate::http::routes::index_api;
 #[derive(OpenApi)]
 #[openapi(
     paths(index_api::index, dataset_api::create_dataset),
-    components(schemas(dataset_api::UploadedFile_SW))
+    components(schemas(dataset_api::UploadedFileSw))
 )]
 struct ApiDocs;
 

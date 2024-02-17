@@ -3,7 +3,6 @@ use serde_json::json;
 
 #[utoipa::path(
     get,
-
     path = "/",
     responses(
         (status = 200, description = "Welcome to the Quantixar API!",)
