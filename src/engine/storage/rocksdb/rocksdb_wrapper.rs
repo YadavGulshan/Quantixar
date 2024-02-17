@@ -1,11 +1,9 @@
-#[cfg(feature = "rock")]
 extern crate rocksdb;
 
 use std::sync::Arc;
 
 use parking_lot::RwLock;
 use rocksdb::ColumnFamily;
-#[cfg(feature = "rock")]
 use rocksdb::DB;
 
 use crate::common::operation_error::{
