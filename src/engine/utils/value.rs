@@ -3,36 +3,36 @@ use serde_json::Value;
 /// Avoids allocating Vec with a single element
 #[derive(Debug)]
 pub enum MultiValue<T> {
-  Single(Option<T>),
-  Multiple(Vec<T>),
+  One(Option<T>),
+  Many(Vec<T>),
 }
 
 impl<T> Default for MultiValue<T> {
   fn default() -> Self {
-    Self::Single(None)
+    Self::One(None)
   }
 }
 
 impl<T> MultiValue<T> {
   pub(crate) fn one(value: T) -> Self {
-    Self::Single(Some(value))
+    Self::One(Some(value))
   }
 
   fn option(value: Option<T>) -> Self {
-    Self::Single(value)
+    Self::One(value)
   }
 
   fn push(&mut self, value: T) {
     match self {
-      Self::Single(opt) => match opt.take() {
+      Self::One(opt) => match opt.take() {
         Some(v) => {
-          *self = Self::Multiple(vec![v, value]);
+          *self = Self::Many(vec![v, value]);
         }
         None => {
-          *self = Self::Single(Some(value));
+          *self = Self::One(Some(value));
         }
       },
-      Self::Multiple(vec) => {
+      Self::Many(vec) => {
         vec.push(value);
       }
     }
@@ -46,16 +46,16 @@ impl<T> MultiValue<T> {
 
   pub fn values(self) -> Vec<T> {
     match self {
-      Self::Single(opt) => opt.into_iter().collect(),
-      Self::Multiple(vec) => vec,
+      Self::One(opt) => opt.into_iter().collect(),
+      Self::Many(vec) => vec,
     }
   }
 
   #[cfg(test)]
   pub(crate) fn as_ref(&self) -> MultiValue<&T> {
     match self {
-      Self::Single(opt) => MultiValue::option(opt.as_ref()),
-      Self::Multiple(vec) => MultiValue::Multiple(vec.iter().collect()),
+      Self::One(opt) => MultiValue::option(opt.as_ref()),
+      Self::Many(vec) => MultiValue::Many(vec.iter().collect()),
     }
   }
 }
@@ -64,12 +64,12 @@ impl<T> MultiValue<T> {
 impl MultiValue<&Value> {
   pub(crate) fn check_is_empty(&self) -> bool {
     match self {
-      Self::Multiple(vec) => vec.iter().all(|x| match x {
+      Self::Many(vec) => vec.iter().all(|x| match x {
         Value::Array(vec) => vec.is_empty(),
         Value::Null => true,
         _ => false,
       }),
-      Self::Single(val) => match val {
+      Self::One(val) => match val {
         None => true,
         Some(Value::Array(vec)) => vec.is_empty(),
         Some(Value::Null) => true,
@@ -80,7 +80,7 @@ impl MultiValue<&Value> {
 
   pub(crate) fn check_is_null(&self) -> bool {
     match self {
-      MultiValue::Single(val) => {
+      MultiValue::One(val) => {
         if let Some(val) = val {
           return val.is_null();
         }
@@ -89,7 +89,7 @@ impl MultiValue<&Value> {
       // { "a": [ { "b": null }, { "b": 1 } ] } => true
       // { "a": [ { "b": 1 }, { "b": null } ] } => true
       // { "a": [ { "b": 1 }, { "b": 2 } ] } => false
-      MultiValue::Multiple(vals) => vals.iter().any(|val| val.is_null()),
+      MultiValue::Many(vals) => vals.iter().any(|val| val.is_null()),
     }
   }
 }
@@ -101,9 +101,9 @@ impl<T> IntoIterator for MultiValue<T> {
 
   fn into_iter(self) -> Self::IntoIter {
     match self {
-      Self::Single(None) => vec![].into_iter(),
-      Self::Single(Some(a)) => vec![a].into_iter(),
-      Self::Multiple(vec) => vec.into_iter(),
+      Self::One(None) => vec![].into_iter(),
+      Self::One(Some(a)) => vec![a].into_iter(),
+      Self::Many(vec) => vec.into_iter(),
     }
   }
 }
@@ -131,7 +131,7 @@ fn parse_array_path(path: &str) -> Option<(&str, Option<u32>)> {
       // get numeric index
       match trimmed_index.parse::<u32>() {
         Ok(num_index) => Some((element, Some(num_index))),
-        Err(_) => None, // not a well formed path array
+        Err(_) => None, // not a well-formed path array
       }
     }
     _ => None,
