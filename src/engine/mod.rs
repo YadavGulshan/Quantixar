@@ -1,7 +1,6 @@
 mod index;
 pub mod storage;
-pub mod toc;
 mod types;
-mod utils;
+pub mod utils;
 mod search;
 mod table;
