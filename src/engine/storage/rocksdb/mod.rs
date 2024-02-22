@@ -3,15 +3,11 @@ use rocksdb::{DBRecoveryMode, LogLevel, Options};
 use crate::common::operation_error::OperationResult;
 
 pub mod rocksdb_buffered_delete_wrapper;
-#[cfg(feature = "rock")]
 pub mod rocksdb_wrapper;
-#[cfg(feature = "rock")]
 pub mod storage_manager;
-#[cfg(feature = "rock")]
 pub mod storage_mgr_opts;
 
 
-#[cfg(feature = "rock")]
 pub type Flusher = Box<dyn FnOnce() -> OperationResult<()> + Send>;
 
 const DB_CACHE_SIZE: usize = 10 * 1024 * 1024;

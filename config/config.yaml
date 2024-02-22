@@ -17,6 +17,8 @@ storage:
   # Note: those payload values that are involved in filtering and are indexed - remain in RAM.
   on_disk_payload: true
 
+  disk_parallelism: 16
+
   # Maximum number of concurrent updates to shard replicas
   # If `null` - maximum concurrency is used.
   update_concurrency: null

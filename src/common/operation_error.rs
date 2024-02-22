@@ -24,6 +24,7 @@ use crate::{
   },
   utils::mem::Mem,
 };
+use crate::common::mmap_type::Error as MmapError;
 
 pub const PROCESS_CANCELLED_BY_SERVICE_MESSAGE: &str = "process cancelled by service";
 
@@ -173,6 +174,12 @@ impl From<IoError> for OperationError
       }
       _ => OperationError::service_error(format!("IO Error: {err}")),
     }
+  }
+}
+
+impl From<MmapError> for OperationError {
+  fn from(err: MmapError) -> Self {
+    Self::service_error(err.to_string())
   }
 }
 
