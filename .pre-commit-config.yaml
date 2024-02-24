@@ -15,9 +15,3 @@ repos:
     rev: v3.6.1
     hooks:
       - id: validate_manifest
-      # - id: end-of-file-fixer
-      #   name: end-of-file-fixer
-        # description: Ensures files end with a newline
-        # entry: end-of-file-fixer
-        # language: python
-        # exclude: \.gitmodules$
