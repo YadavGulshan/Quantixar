@@ -11,22 +11,21 @@ use parking_lot::RwLock;
 use rocksdb::DB;
 use serde::{Deserialize, Serialize};
 
-use hnsw_rs::dist::DistKind;
-
-use crate::common::operation_error::{OperationError, OperationResult};
+use crate::common::operation_error::{check_process_stopped, OperationError, OperationResult};
 use crate::engine::storage::rocksdb::Flusher;
 use crate::engine::storage::rocksdb::rocksdb_wrapper::DatabaseColumnWrapper;
 use crate::engine::storage::vector::base::{DenseVectorStorage, VectorStorage, VectorStorageEnum};
 use crate::engine::storage::vector::bitvec::bitvec_set_deleted;
 use crate::engine::storage::vector::chunked_vectors::ChunkedVectors;
 use crate::engine::types::cow_vector::CowVector;
+use crate::engine::types::distance::Distance;
 use crate::engine::types::types::{PointOffsetType, VectorElementType};
 use crate::engine::types::vector::VectorRef;
 
 /// In-memory vector storage with on-update persistence using `store`
 pub struct SimpleDenseVectorStorage {
   dim: usize,
-  distance: DistKind,
+  distance: Distance,
   vectors: ChunkedVectors<VectorElementType>,
   db_wrapper: DatabaseColumnWrapper,
   update_buffer: StoredRecord,
@@ -46,7 +45,7 @@ pub fn open_simple_vector_storage(
   database: Arc<RwLock<DB>>,
   database_column_name: &str,
   dim: usize,
-  distance: DistKind,
+  distance: Distance,
 ) -> OperationResult<Arc<AtomicRefCell<VectorStorageEnum>>> {
   let mut vectors = ChunkedVectors::new(dim);
   let (mut deleted, mut deleted_count) = (BitVec::new(), 0);
@@ -139,54 +138,101 @@ impl DenseVectorStorage for SimpleDenseVectorStorage {
 
 impl VectorStorage for SimpleDenseVectorStorage {
   fn vector_dim(&self) -> usize {
-    todo!()
+    self.dim
   }
 
-  fn distance(&self) -> DistKind {
-    todo!()
+  fn distance(&self) -> Distance {
+    self.distance
   }
 
   fn is_on_disk(&self) -> bool {
-    todo!()
+    false
   }
 
   fn total_vector_count(&self) -> usize {
-    todo!()
+    self.vectors.len()
   }
 
   fn get_vector(&self, key: PointOffsetType) -> CowVector {
-    todo!()
+    self.get_dense(key).into()
   }
 
   fn insert_vector(&mut self, key: PointOffsetType, vector: VectorRef) -> OperationResult<()> {
-    todo!()
+    let vector = vector.try_into()?;
+    self.vectors.insert(key, vector)?;
+    self.set_deleted(key, false);
+    self.update_stored(key, false, Some(vector))?;
+    Ok(())
   }
 
   fn update_from(&mut self, other: &VectorStorageEnum, other_ids: &mut dyn Iterator<Item=PointOffsetType>, stopped: &AtomicBool) -> OperationResult<Range<PointOffsetType>> {
-    todo!()
+    let start_index = self.vectors.len() as PointOffsetType;
+    for point_id in other_ids {
+      check_process_stopped(stopped)?;
+      // Do not perform preprocessing - vectors should be already processed
+      let other_vector = other.get_vector(point_id);
+      let other_vector = other_vector.as_vec_ref().try_into()?;
+      let other_deleted = other.is_deleted_vector(point_id);
+      let new_id = self.vectors.push(other_vector)?;
+      self.set_deleted(new_id, other_deleted);
+      self.update_stored(new_id, other_deleted, Some(other_vector))?;
+    }
+    let end_index = self.vectors.len() as PointOffsetType;
+    Ok(start_index..end_index)
   }
 
   fn flusher(&self) -> Flusher {
-    todo!()
+    self.db_wrapper.flusher()
   }
 
   fn files(&self) -> Vec<PathBuf> {
-    todo!()
+    vec![]
   }
 
   fn delete_vector(&mut self, key: PointOffsetType) -> OperationResult<bool> {
-    todo!()
+    let is_deleted = !self.set_deleted(key, true);
+    if is_deleted {
+      self.update_stored(key, true, None)?;
+    }
+    Ok(is_deleted)
   }
 
   fn is_deleted_vector(&self, key: PointOffsetType) -> bool {
-    todo!()
+    self.deleted.get(key as usize).map(|b| *b).unwrap_or(false)
   }
 
   fn deleted_vector_count(&self) -> usize {
-    todo!()
+    self.deleted_count
   }
 
   fn deleted_vector_bitslice(&self) -> &BitSlice {
-    todo!()
+    self.deleted.as_bitslice()
   }
+}
+
+#[cfg(test)]
+mod tests {
+  use tempfile::Builder;
+
+  use crate::engine::storage::rocksdb::storage_manager::StorageManager;
+  use crate::engine::storage::vector::dense_vector_storage::{open_simple_vector_storage, SimpleDenseVectorStorage};
+  use crate::engine::types::distance::Distance;
+
+  // fn setup_test_environment() -> SimpleDenseVectorStorage {
+  //   let temp_dir = Builder::new().prefix("test").tempdir().unwrap();
+  //   let strg_mgr = StorageManager::new(temp_dir.path(), &["test"]);
+  //   let db = strg_mgr.db_column_wrapper.database.clone();
+  //   let database_column_name = "test";
+  //
+  //   let distance = Distance::Cosine;
+  //   let dim = 3;
+  //   let storage = open_simple_vector_storage(db, database_column_name, dim, distance)
+  //           .expect("Failed to open vector storage")
+  //           .borrow_mut()
+  //           .downcast_mut::<SimpleDenseVectorStorage>()
+  //           .unwrap()
+  //           .clone();
+  //
+  //   storage
+  // }
 }
