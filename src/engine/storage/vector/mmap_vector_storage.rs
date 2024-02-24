@@ -209,3 +209,58 @@ fn open_append<P: AsRef<Path>>(path: P) -> io::Result<File> {
           .create(false)
           .open(path)
 }
+
+#[cfg(test)]
+mod tests {
+  use tempfile::Builder;
+
+  use crate::engine::storage::rocksdb::DB_VECTOR_CF;
+  use crate::engine::storage::rocksdb::storage_manager::StorageManager;
+  use crate::engine::storage::vector::base::VectorStorage;
+  use crate::engine::storage::vector::dense_vector_storage::open_simple_vector_storage;
+  use crate::engine::storage::vector::mmap_vector_storage::{DELETED_PATH, open_memmap_vector_storage, VECTORS_PATH};
+  use crate::engine::types::distance::Distance;
+
+  #[test]
+  fn test_basic_persistence() {
+    let dir = Builder::new().prefix("storage_dir").tempdir().unwrap();
+
+    let points = vec![
+      vec![1.0, 0.0, 1.0, 1.0],
+      vec![1.0, 0.0, 1.0, 0.0],
+      vec![1.0, 1.0, 1.0, 1.0],
+      vec![1.0, 1.0, 0.0, 1.0],
+      vec![1.0, 0.0, 0.0, 0.0],
+    ];
+
+    let storage = open_memmap_vector_storage(dir.path(), 4, Distance::DotProduct).unwrap();
+    let mut borrowed_storage = storage.borrow_mut();
+    let files = borrowed_storage.files();
+    for file_name in [VECTORS_PATH, DELETED_PATH] {
+      files
+              .iter()
+              .find(|p| p.file_name().unwrap() == file_name)
+              .expect("storage is missing required file");
+    }
+
+    {
+      let dir2 = Builder::new().prefix("db_dir").tempdir().unwrap();
+      let db = StorageManager::new(dir2.path(), &[DB_VECTOR_CF]).db_column_wrapper.database;
+      let storage2 = open_simple_vector_storage(db, DB_VECTOR_CF, 4, Distance::DotProduct).unwrap();
+      {
+        let mut borrowed_storage2 = storage2.borrow_mut();
+        borrowed_storage2.insert_vector(0, points[0].as_slice().into()).unwrap();
+        borrowed_storage2.insert_vector(1, points[1].as_slice().into()).unwrap();
+        borrowed_storage2.insert_vector(2, points[2].as_slice().into()).unwrap();
+      }
+      borrowed_storage
+              .update_from(&storage2.borrow(), &mut Box::new(0..3), &Default::default())
+              .unwrap();
+    }
+
+    assert_eq!(borrowed_storage.total_vector_count(), 3);
+    let vector = borrowed_storage.get_vector(1).to_owned();
+    let vector: Vec<_> = vector.try_into().unwrap();
+    println!("{:?}", vector);
+  }
+}

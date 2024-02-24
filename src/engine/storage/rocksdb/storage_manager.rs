@@ -24,7 +24,7 @@ use crate::engine::storage::rocksdb::{DB_MAPPING_CF, db_options, DB_PAYLOAD_CF, 
 
 pub struct StorageManager
 {
-  pub(crate) db_column_wrapper: DatabaseColumnWrapper,
+  pub db_column_wrapper: DatabaseColumnWrapper,
 }
 
 impl StorageManager
