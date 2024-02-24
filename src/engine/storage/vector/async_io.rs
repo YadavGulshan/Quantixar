@@ -1,8 +1,7 @@
 use std::fs::File;
 use std::os::fd::AsRawFd;
 
-use io_uring::{IoUring, opcode};
-use io_uring::types::Fd;
+use io_uring::{IoUring, opcode, types::Fd};
 
 use memory::mmap_ops::transmute_from_u8_to_slice;
 
@@ -26,7 +25,7 @@ struct Buffer {
   pub meta: Option<BufferMeta>,
 }
 
-struct BufferStore {
+pub(crate) struct BufferStore {
   /// Stores the buffer for the point vectors
   pub buffers: Vec<Buffer>,
 }
@@ -61,6 +60,7 @@ pub struct UringReader {
   header_size: usize,
 }
 
+#[cfg(target_os = "linux")]
 impl UringReader {
   pub fn new(file: File, raw_size: usize, header_size: usize) -> OperationResult<Self> {
     let buffers = BufferStore::new(DISK_PARALLELISM, raw_size);

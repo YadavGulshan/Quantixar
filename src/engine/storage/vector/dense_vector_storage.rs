@@ -209,30 +209,3 @@ impl VectorStorage for SimpleDenseVectorStorage {
     self.deleted.as_bitslice()
   }
 }
-
-#[cfg(test)]
-mod tests {
-  use tempfile::Builder;
-
-  use crate::engine::storage::rocksdb::storage_manager::StorageManager;
-  use crate::engine::storage::vector::dense_vector_storage::{open_simple_vector_storage, SimpleDenseVectorStorage};
-  use crate::engine::types::distance::Distance;
-
-  // fn setup_test_environment() -> SimpleDenseVectorStorage {
-  //   let temp_dir = Builder::new().prefix("test").tempdir().unwrap();
-  //   let strg_mgr = StorageManager::new(temp_dir.path(), &["test"]);
-  //   let db = strg_mgr.db_column_wrapper.database.clone();
-  //   let database_column_name = "test";
-  //
-  //   let distance = Distance::Cosine;
-  //   let dim = 3;
-  //   let storage = open_simple_vector_storage(db, database_column_name, dim, distance)
-  //           .expect("Failed to open vector storage")
-  //           .borrow_mut()
-  //           .downcast_mut::<SimpleDenseVectorStorage>()
-  //           .unwrap()
-  //           .clone();
-  //
-  //   storage
-  // }
-}
