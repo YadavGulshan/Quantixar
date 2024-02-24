@@ -10,7 +10,6 @@ use atomic_refcell::AtomicRefCell;
 use bitvec::prelude::BitSlice;
 use cgroups_rs::Controller;
 
-use hnsw_rs::dist::DistKind;
 use memory::mmap_ops;
 
 use crate::common::operation_error::{check_process_stopped, OperationResult};
@@ -19,6 +18,7 @@ use crate::engine::storage::vector::async_common::get_async_scorer;
 use crate::engine::storage::vector::base::{DenseVectorStorage, VectorStorage, VectorStorageEnum};
 use crate::engine::storage::vector::mmap_vector::MmapVectors;
 use crate::engine::types::cow_vector::CowVector;
+use crate::engine::types::distance::Distance;
 use crate::engine::types::types::{DenseVector, PointOffsetType, VectorElementType};
 use crate::engine::types::vector::VectorRef;
 
@@ -29,14 +29,14 @@ pub struct MemmapVectorStorage {
   vectors_path: PathBuf,
   deleted_path: PathBuf,
   mmap_store: Option<MmapVectors>,
-  distance: DistKind,
+  distance: Distance,
 }
 
 
 pub fn open_memmap_vector_storage(
   path: &Path,
   dim: usize,
-  distance: DistKind,
+  distance: Distance,
 ) -> OperationResult<Arc<AtomicRefCell<VectorStorageEnum>>> {
   open_memmap_vector_storage_with_async_io(path, dim, distance, get_async_scorer())
 }
@@ -44,7 +44,7 @@ pub fn open_memmap_vector_storage(
 pub fn open_memmap_vector_storage_with_async_io(
   path: &Path,
   dim: usize,
-  distance: DistKind,
+  distance: Distance,
   with_async_io: bool,
 ) -> OperationResult<Arc<AtomicRefCell<VectorStorageEnum>>> {
   create_dir_all(path)?;
@@ -96,8 +96,8 @@ impl VectorStorage for MemmapVectorStorage {
     self.mmap_store.as_ref().unwrap().dim
   }
 
-  fn distance(&self) -> DistKind {
-    self.distance.clone() // Not good for performance, TODO: fix
+  fn distance(&self) -> Distance {
+    self.distance // Not good for performance, TODO: fix
   }
 
   fn is_on_disk(&self) -> bool {

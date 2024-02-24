@@ -5,20 +5,20 @@ use std::sync::atomic::AtomicBool;
 use bitvec::prelude::BitSlice;
 use clap::Parser;
 
-use hnsw_rs::dist::DistKind;
 
 use crate::common::operation_error::OperationResult;
 use crate::engine::storage::rocksdb::Flusher;
 use crate::engine::storage::vector::dense_vector_storage::SimpleDenseVectorStorage;
 use crate::engine::storage::vector::mmap_vector_storage::MemmapVectorStorage;
 use crate::engine::types::cow_vector::CowVector;
+use crate::engine::types::distance::Distance;
 use crate::engine::types::types::{PointOffsetType, VectorElementType};
 use crate::engine::types::vector::VectorRef;
 
 pub trait VectorStorage {
   fn vector_dim(&self) -> usize;
 
-  fn distance(&self) -> DistKind;
+  fn distance(&self) -> Distance;
 
   fn is_on_disk(&self) -> bool;
 
@@ -110,7 +110,7 @@ impl VectorStorage for VectorStorageEnum {
     }
   }
 
-  fn distance(&self) -> DistKind {
+  fn distance(&self) -> Distance {
     match self {
       VectorStorageEnum::DenseSimple(v) => v.distance(),
       VectorStorageEnum::Memmap(v) => v.distance(),
