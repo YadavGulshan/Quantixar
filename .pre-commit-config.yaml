@@ -8,9 +8,16 @@ repos:
       - id: check-symlinks
       - id: check-yaml
       - id: end-of-file-fixer
+        files: \.rs$
       - id: mixed-line-ending
       - id: trailing-whitespace
   - repo: https://github.com/pre-commit/pre-commit
     rev: v3.6.1
     hooks:
       - id: validate_manifest
+      # - id: end-of-file-fixer
+      #   name: end-of-file-fixer
+        # description: Ensures files end with a newline
+        # entry: end-of-file-fixer
+        # language: python
+        # exclude: \.gitmodules$
