@@ -93,7 +93,7 @@ ndarray = { version = "0.15" }
 
 [features]
 
-default = []
+default = ["stdsimd"]
 
 # simd on x86/x86_64
 simdeez_f = ["simdeez"]

@@ -7,21 +7,12 @@ use crate::{common::operation_error::OperationResult, engine::storage::types::St
 use super::collections::Collections;
 
 pub struct TableOfContent {
-  collections: Arc<RwLock<Collections>>,
+  // collections: Arc<RwLock<Collections>>,
   pub(super) storage_config: Arc<StorageConfig>,
-  search_runtime: Runtime,
-  update_runtime: Runtime,
-  general_runtime: Runtime,
 }
 
 impl TableOfContent {
-  pub fn new(
-    collections: Arc<RwLock<Collections>>,
-    storage_config: Arc<StorageConfig>,
-    search_runtime: Runtime,
-    update_runtime: Runtime,
-    general_runtime: Runtime,
-  ) -> Self {
+  pub fn new(collections: Arc<RwLock<Collections>>, storage_config: Arc<StorageConfig>) -> Self {
     todo!()
   }
 
