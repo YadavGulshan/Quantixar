@@ -408,3 +408,11 @@ impl From<Vector> for QueryVector {
     Self::Nearest(vec)
   }
 }
+
+impl Into<Vector> for QueryVector {
+  fn into(self) -> Vector {
+    match self {
+      QueryVector::Nearest(v) => v,
+    }
+  }
+}
