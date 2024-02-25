@@ -13,6 +13,7 @@ use atomicwrites::Error as AtomicIoError;
 use hdf5::Error;
 use rayon::ThreadPoolBuildError;
 use thiserror::Error;
+use io::file_operations::FileStorageError;
 
 use crate::{
   common::{
@@ -199,6 +200,11 @@ impl From<fs_extra::error::Error> for OperationError
   }
 }
 
+impl From<FileStorageError> for OperationError {
+    fn from(err: FileStorageError) -> Self {
+        Self::service_error(err.to_string())
+    }
+}
 
 impl From<TryReserveError> for OperationError
 {
