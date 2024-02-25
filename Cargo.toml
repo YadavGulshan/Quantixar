@@ -38,7 +38,7 @@ tokio = { version = "1.36.0", features = [
 tracing = { version = "0.1" }
 
 validator = { version = "0.16", features = ["derive"] }
-config = "~0.13.4"
+config = "0.14.0"
 serde_cbor = "0.11.2"
 serde = { version = "1.0.196", features = ["derive"] }
 schemars = { version = "0.8.16", features = [
@@ -65,9 +65,9 @@ clap = { version = "4.5.1", features = ["derive"] }
 actix-web = "4.5.1"
 actix-cors = "0.7.0"
 actix-multipart = "0.6.1"
-futures = "0.1.31"
+futures = "0.3.30"
 hyper = { version = "1.1.0", features = ["client"] }
-ordered-float = "2.10.1"
+ordered-float = "4.2.0"
 tinyvec = { version = "1.6.0", features = ["serde", "std"] }
 num-traits = "0.2.18"
 bitvec = "1.0.1"
@@ -81,8 +81,8 @@ procfs = { version = "0.16", default-features = false }
 io-uring = "0.6.2"
 
 # Workspace members
-common = { path = "lib/common" }
-memory = { path = "lib/memory" }
+io = { path = "lib/common/io" }
+memory = { path = "lib/common/memory" }
 hnsw_rs = { path = "lib/hnswlib-rs" }
 
 [profile.dev]
