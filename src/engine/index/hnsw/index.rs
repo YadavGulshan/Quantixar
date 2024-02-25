@@ -10,18 +10,19 @@ use crate::{
     common::operation_error::OperationResult, engine::{index::hnsw::config::HnswGraphConfig, storage::vector::base::VectorStorageEnum}
 };
 
-pub struct HNSWIndex<'b, T: Clone + Send + Sync + 'b, D: Distance<T>> {
+pub struct HNSWIndex<'b, T: Clone + Send + Sync + 'b, D: Distance<T> + Send + Sync> {
     vector_storage: Arc<AtomicRefCell<VectorStorageEnum>>,
     config: HnswGraphConfig,
     path: PathBuf,
     hnsw: Hnsw<'b, T, D>,
 }
 
-impl<'b, T: Clone + Send + Sync + 'b, D: Distance<T>> HNSWIndex<'b, T, D> {
+impl<'b, T: Clone + Send + Sync + 'b, D: Distance<T> + Send + Sync> HNSWIndex<'b, T, D> {
     pub fn new(
         vector_storage: Arc<AtomicRefCell<VectorStorageEnum>>,
         config: HnswGraphConfig,
         path: &Path,
+        dist_f: D,
     ) -> OperationResult<Self> {
         create_dir_all(path)?;
         let config_path = HnswGraphConfig::get_config_path(path);
@@ -43,7 +44,7 @@ impl<'b, T: Clone + Send + Sync + 'b, D: Distance<T>> HNSWIndex<'b, T, D> {
         let nb_layer = 16.min((nb_elem as f32).ln().trunc() as usize);
         let ef_c = config.ef_construct;
 
-        let hnsw = Hnsw::<T, D>::new(max_nb_connection, nb_elem, nb_layer, ef_c, D {});
+        let hnsw = Hnsw::<T, D>::new(max_nb_connection, nb_elem, nb_layer, ef_c, dist_f);
 
         Ok(HNSWIndex {
             vector_storage,

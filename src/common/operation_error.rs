@@ -143,6 +143,12 @@ impl From<fs_extra::error::Error> for OperationError {
     }
 }
 
+impl From<FileStorageError> for OperationError {
+    fn from(err: FileStorageError) -> Self {
+        Self::service_error(err.to_string())
+    }
+}
+
 impl From<TryReserveError> for OperationError {
     fn from(err: TryReserveError) -> Self {
         let free_memory = Mem::new().available_memory_bytes();
