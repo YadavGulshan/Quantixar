@@ -1,20 +1,21 @@
-use std::fs::{File, OpenOptions};
-use std::io::Write;
-use std::mem::{self, size_of, transmute};
-use std::path::Path;
-use std::sync::Arc;
+use std::{
+  fs::{File, OpenOptions}, io::Write, mem::{self, size_of, transmute}, path::Path, sync::Arc
+};
 
 use bitvec::prelude::BitSlice;
 use memmap2::Mmap;
 use parking_lot::Mutex;
 
-use memory::mmap_ops;
-use crate::common::logging::LogError;
-use crate::common::mmap_type::MmapBitSlice;
-use crate::common::operation_error::OperationResult;
-use crate::engine::storage::rocksdb::Flusher;
+#[cfg(target_os = "linux")]
 use crate::engine::storage::vector::async_io::UringReader;
-use crate::engine::types::types::{PointOffsetType, VectorElementType};
+#[cfg(not(target_os = "linux"))]
+use crate::engine::storage::vector::async_io_mock::UringReader;
+use crate::{
+  common::{logging::LogError, mmap_type::MmapBitSlice, operation_error::OperationResult}, engine::{
+    storage::rocksdb::Flusher, types::types::{PointOffsetType, VectorElementType}
+  }
+};
+use memory::mmap_ops;
 
 const HEADER_SIZE: usize = 4;
 const VECTORS_HEADER: &[u8; HEADER_SIZE] = b"data";
@@ -37,7 +38,6 @@ pub struct MmapVectors {
   pub deleted_count: usize,
 }
 
-
 impl MmapVectors {
   pub fn open(
     vectors_path: &Path,
@@ -46,17 +46,16 @@ impl MmapVectors {
     with_async_io: bool,
   ) -> OperationResult<Self> {
     // Allocate/open vectors mmap
-    ensure_mmap_file_size(vectors_path, VECTORS_HEADER, None)
-            .describe("Create mmap data file")?;
+    ensure_mmap_file_size(vectors_path, VECTORS_HEADER, None).describe("Create mmap data file")?;
     let mmap = mmap_ops::open_read_mmap(vectors_path).describe("Open mmap for reading")?;
     let num_vectors = (mmap.len() - HEADER_SIZE) / dim / size_of::<VectorElementType>();
 
     // Allocate/open deleted mmap
     let deleted_mmap_size = deleted_mmap_size(num_vectors);
     ensure_mmap_file_size(deleted_path, DELETED_HEADER, Some(deleted_mmap_size as u64))
-            .describe("Create mmap deleted file")?;
+      .describe("Create mmap deleted file")?;
     let deleted_mmap =
-            mmap_ops::open_write_mmap(deleted_path).describe("Open mmap deleted for writing")?;
+      mmap_ops::open_write_mmap(deleted_path).describe("Open mmap deleted for writing")?;
 
     // Advise kernel that we'll need this page soon so the kernel can prepare
     #[cfg(unix)]
@@ -151,20 +150,21 @@ impl MmapVectors {
   #[cfg(target_os = "linux")]
   fn process_points_uring(
     &self,
-    points: impl Iterator<Item=PointOffsetType>,
+    points: impl Iterator<Item = PointOffsetType>,
     callback: impl FnMut(usize, PointOffsetType, &[VectorElementType]),
   ) -> OperationResult<()> {
-    self.uring_reader
-            .lock()
-            .as_mut()
-            .expect("io_uring reader should be initialized")
-            .read_stream(points, callback)
+    self
+      .uring_reader
+      .lock()
+      .as_mut()
+      .expect("io_uring reader should be initialized")
+      .read_stream(points, callback)
   }
 
   #[cfg(not(target_os = "linux"))]
   fn process_points_simple(
     &self,
-    points: impl Iterator<Item=PointOffsetType>,
+    points: impl Iterator<Item = PointOffsetType>,
     mut callback: impl FnMut(usize, PointOffsetType, &[VectorElementType]),
   ) -> OperationResult<()> {
     for (idx, point) in points.enumerate() {
@@ -179,7 +179,7 @@ impl MmapVectors {
   /// In particular, uses io_uring on Linux and simple synchronous IO otherwise.
   pub fn read_vectors_async(
     &self,
-    points: impl Iterator<Item=PointOffsetType>,
+    points: impl Iterator<Item = PointOffsetType>,
     callback: impl FnMut(usize, PointOffsetType, &[VectorElementType]),
   ) -> OperationResult<()> {
     #[cfg(target_os = "linux")]

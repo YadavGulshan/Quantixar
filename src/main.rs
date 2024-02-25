@@ -3,6 +3,13 @@
 
 extern crate core;
 
+mod actix;
+mod cli;
+mod common;
+mod engine;
+mod setting;
+mod utils;
+
 use std::env;
 
 use clap::Parser;
@@ -13,14 +20,6 @@ use tracing::{event, Level};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
 use actix::init;
-
-mod cli;
-mod common;
-mod engine;
-mod http;
-mod setting;
-mod utils;
-
 #[main]
 async fn main() {
   let args = Args::parse();
@@ -46,24 +45,24 @@ fn tracing_subscriber() {
 
   // Build a subscriber, using the default `RUST_LOG` environment variable for our filter.
   let builder = FmtSubscriber::builder()
-          .with_writer(std::io::stderr)
-          .with_env_filter(EnvFilter::from_default_env())
-          .with_target(false);
+    .with_writer(std::io::stderr)
+    .with_env_filter(EnvFilter::from_default_env())
+    .with_target(false);
 
   match env::var("RUST_LOG_PRETTY") {
     // If the `RUST_LOG_PRETTY` environment variable is set to "true", we should emit logs in a
     // pretty, human-readable output format.
     Ok(s) if s == "true" => builder
-            .pretty()
-            // Show levels, because ANSI escape sequences are normally used to indicate this.
-            .with_level(true)
-            .init(),
+      .pretty()
+      // Show levels, because ANSI escape sequences are normally used to indicate this.
+      .with_level(true)
+      .init(),
     // Otherwise, we should install the subscriber without any further additions.
     _ => builder.with_ansi(false).init(),
   }
   event!(
-        Level::DEBUG,
-        "RUST_LOG set to '{}'",
-        env::var("RUST_LOG").unwrap_or_else(|_| String::from("<Could not get env>"))
-    );
+    Level::DEBUG,
+    "RUST_LOG set to '{}'",
+    env::var("RUST_LOG").unwrap_or_else(|_| String::from("<Could not get env>"))
+  );
 }

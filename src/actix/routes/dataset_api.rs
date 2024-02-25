@@ -1,23 +1,18 @@
 use std::{
-  io::{Error, Read, Write},
-  path::Path,
+  convert::Infallible, io::{Error, Read, Write}, ops::FromResidual, path::Path
 };
-use std::convert::Infallible;
-use std::ops::FromResidual;
 
 use actix_multipart::{
-  form::{MultipartForm, tempfile::TempFile},
-  Multipart,
+  form::{tempfile::TempFile, MultipartForm}, Multipart
 };
-use actix_web::{http::StatusCode, HttpResponse, post, Responder};
+use actix_web::{http::StatusCode, post, HttpResponse, Responder};
 use chrono::format;
 use hdf5::{File as Hdf5File, H5Type, Result};
 use serde::{Deserialize, Serialize};
 use tracing::debug;
 use utoipa::{openapi::Components, ToSchema};
 
-use crate::common::operation_error::OperationResult;
-use crate::http::handlers::dataset::read_hdf5;
+use crate::{actix::handlers::dataset::read_hdf5, common::operation_error::OperationResult};
 
 #[derive(Serialize, Deserialize, ToSchema, Clone)]
 pub enum DataType {

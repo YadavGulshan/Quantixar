@@ -2,9 +2,9 @@ use std::sync::Arc;
 
 use tokio::{runtime::Runtime, sync::RwLock};
 
-use crate::{
-  common::operation_error::OperationResult, engine::{storage::types::StorageConfig, table::collections::Collections}
-};
+use crate::{common::operation_error::OperationResult, engine::storage::types::StorageConfig};
+
+use super::collections::Collections;
 
 pub struct TableOfContent {
   collections: Arc<RwLock<Collections>>,
