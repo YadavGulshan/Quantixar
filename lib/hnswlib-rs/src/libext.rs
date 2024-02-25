@@ -5,19 +5,9 @@
 #![allow(non_camel_case_types)]
 
 use core::ffi::c_ulonglong;
-use std::{
-    fs::OpenOptions,
-    io::BufReader,
-    path::PathBuf,
-    ptr,
-};
+use std::{fs::OpenOptions, io::BufReader, path::PathBuf, ptr};
 
-use crate::{
-    api::*,
-    dist::*,
-    hnsw::*,
-    hnswio::*,
-};
+use crate::{api::*, dist::*, hnsw::*, hnswio::*};
 
 // the export macro makes the macro global in crate and accecssible via crate::declare_myapi_type!
 #[macro_export]
@@ -42,26 +32,22 @@ declare_myapi_type!(HnswApiNodata, NoData);
 
 /// to be able to return a vector from rust in a julia struct before converting to a julia Vector
 #[repr(C)]
-pub struct Vec_api<T>
-{
+pub struct Vec_api<T> {
     len: i64,
     ptr: *const T,
 } // end struct
 
 #[repr(C)]
 /// The basic Neighbour info returned by api
-pub struct Neighbour_api
-{
+pub struct Neighbour_api {
     /// id of neighbour
     pub id: usize,
     /// distance of data sent in request to this neighbour
     pub d: f32,
 }
 
-impl From<&Neighbour> for Neighbour_api
-{
-    fn from(neighbour: &Neighbour) -> Self
-    {
+impl From<&Neighbour> for Neighbour_api {
+    fn from(neighbour: &Neighbour) -> Self {
         Neighbour_api {
             id: neighbour.d_id,
             d: neighbour.distance,
@@ -71,15 +57,13 @@ impl From<&Neighbour> for Neighbour_api
 
 #[repr(C)]
 /// The response to a neighbour search requests
-pub struct Neighbourhood_api
-{
+pub struct Neighbourhood_api {
     pub nbgh: i64,
     pub neighbours: *const Neighbour_api,
 }
 
 #[repr(C)]
-pub struct Neighbour_api_parsearch_answer
-{
+pub struct Neighbour_api_parsearch_answer {
     /// The number of answers (o request), i.e size of both vectors nbgh and neighbours
     pub nb_answer: usize,
     /// for each request, we get a Neighbourhood_api
@@ -427,8 +411,7 @@ pub extern "C" fn init_hnsw_f32(
     ef_const: usize,
     namelen: usize,
     cdistname: *const u8,
-) -> *const HnswApif32
-{
+) -> *const HnswApif32 {
     log::info!("entering init_hnsw_f32");
     let slice = unsafe { std::slice::from_raw_parts(cdistname, namelen) };
     let dname = String::from_utf8_lossy(slice).into_owned();
@@ -502,8 +485,7 @@ pub extern "C" fn new_hnsw_f32(
     cdistname: *const u8,
     max_elements: usize,
     max_layer: usize,
-) -> *const HnswApif32
-{
+) -> *const HnswApif32 {
     log::debug!("entering new_hnsw_f32");
     let slice = unsafe { std::slice::from_raw_parts(cdistname, namelen) };
     let dname = String::from_utf8_lossy(slice);
@@ -588,14 +570,12 @@ pub extern "C" fn new_hnsw_f32(
 } // end of new_hnsw_f32
 
 #[no_mangle]
-pub unsafe extern "C" fn drop_hnsw_f32(p: *const HnswApif32)
-{
+pub unsafe extern "C" fn drop_hnsw_f32(p: *const HnswApif32) {
     let _raw = Box::from_raw(p as *mut HnswApif32);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn drop_hnsw_u16(p: *const HnswApiu16)
-{
+pub unsafe extern "C" fn drop_hnsw_u16(p: *const HnswApiu16) {
     let _raw = Box::from_raw(p as *mut HnswApiu16);
 }
 
@@ -604,8 +584,7 @@ pub extern "C" fn init_hnsw_ptrdist_f32(
     max_nb_conn: usize,
     ef_const: usize,
     c_func: extern "C" fn(*const f32, *const f32, c_ulonglong) -> f32,
-) -> *const HnswApif32
-{
+) -> *const HnswApif32 {
     log::info!("init_ hnsw_ptrdist: ptr  {:?}", c_func);
     let c_dist = DistCFFI::<f32>::new(c_func);
     let h = Hnsw::<f32, DistCFFI<f32>>::new(max_nb_conn, 10000, 16, ef_const, c_dist);
@@ -616,8 +595,7 @@ pub extern "C" fn init_hnsw_ptrdist_f32(
 }
 
 #[no_mangle]
-pub extern "C" fn insert_f32(hnsw_api: *mut HnswApif32, len: usize, data: *const f32, id: usize)
-{
+pub extern "C" fn insert_f32(hnsw_api: *mut HnswApif32, len: usize, data: *const f32, id: usize) {
     log::trace!("entering insert_f32, vec len is {:?}, id : {:?} ", len, id);
     //  construct vector: Rust clones and take ownership.
     let data_v: Vec<f32>;
@@ -637,8 +615,7 @@ pub extern "C" fn parallel_insert_f32(
     vec_len: usize,
     datas: *mut *const f32,
     ids: *const usize,
-)
-{
+) {
     //
     // log::debug!("entering parallel_insert_f32 , vec len is {:?}, nb_vec : {:?}", vec_len,
     // nb_vec);
@@ -680,8 +657,7 @@ pub extern "C" fn search_neighbours_f32(
     data: *const f32,
     knbn: usize,
     ef_search: usize,
-) -> *const Neighbourhood_api
-{
+) -> *const Neighbourhood_api {
     //
     log::trace!(
         "entering search_neighbours , vec len is {:?}, id : {:?} ef_search {:?}",
@@ -695,7 +671,9 @@ pub extern "C" fn search_neighbours_f32(
         let slice = std::slice::from_raw_parts(data, len);
         data_v = Vec::from(slice);
         log::trace!("calling search neighbours {:?}", data_v);
-        neighbours = (*hnsw_api).opaque.search_neighbours(&data_v, knbn, ef_search);
+        neighbours = (*hnsw_api)
+            .opaque
+            .search_neighbours(&data_v, knbn, ef_search);
     }
     let neighbours_api: Vec<Neighbour_api> =
         neighbours.iter().map(|n| Neighbour_api::from(n)).collect();
@@ -730,8 +708,7 @@ pub extern "C" fn init_hnsw_i32(
     ef_const: usize,
     namelen: usize,
     cdistname: *const u8,
-) -> *const HnswApii32
-{
+) -> *const HnswApii32 {
     log::info!("entering init_hnsw_i32");
     let slice = unsafe { std::slice::from_raw_parts(cdistname, namelen) };
     let dname = String::from_utf8_lossy(slice);
@@ -765,8 +742,7 @@ pub extern "C" fn init_hnsw_ptrdist_i32(
     max_nb_conn: usize,
     ef_const: usize,
     c_func: extern "C" fn(*const i32, *const i32, c_ulonglong) -> f32,
-) -> *const HnswApii32
-{
+) -> *const HnswApii32 {
     log::debug!("init_ hnsw_ptrdist: ptr  {:?}", c_func);
     let c_dist = DistCFFI::<i32>::new(c_func);
     let h = Hnsw::<i32, DistCFFI<i32>>::new(max_nb_conn, 10000, 16, ef_const, c_dist);
@@ -794,8 +770,7 @@ pub extern "C" fn init_hnsw_u32(
     ef_const: usize,
     namelen: usize,
     cdistname: *const u8,
-) -> *const HnswApiu32
-{
+) -> *const HnswApiu32 {
     log::debug!("entering init_hnsw_u32");
     let slice = unsafe { std::slice::from_raw_parts(cdistname, namelen) };
     let dname = String::from_utf8_lossy(slice);
@@ -836,8 +811,7 @@ pub extern "C" fn init_hnsw_ptrdist_u32(
     max_nb_conn: usize,
     ef_const: usize,
     c_func: extern "C" fn(*const u32, *const u32, c_ulonglong) -> f32,
-) -> *const HnswApiu32
-{
+) -> *const HnswApiu32 {
     log::info!("init_ hnsw_ptrdist: ptr  {:?}", c_func);
     let c_dist = DistCFFI::<u32>::new(c_func);
     let h = Hnsw::<u32, DistCFFI<u32>>::new(max_nb_conn, 10000, 16, ef_const, c_dist);
@@ -865,8 +839,7 @@ pub extern "C" fn init_hnsw_u16(
     ef_const: usize,
     namelen: usize,
     cdistname: *const u8,
-) -> *const HnswApiu16
-{
+) -> *const HnswApiu16 {
     log::info!("entering init_hnsw_u16");
     let slice = unsafe { std::slice::from_raw_parts(cdistname, namelen) };
     let dname = String::from_utf8_lossy(slice);
@@ -916,8 +889,7 @@ pub extern "C" fn new_hnsw_u16(
     cdistname: *const u8,
     max_elements: usize,
     max_layer: usize,
-) -> *const HnswApiu16
-{
+) -> *const HnswApiu16 {
     log::info!("entering init_hnsw_u16");
     let slice = unsafe { std::slice::from_raw_parts(cdistname, namelen) };
     let dname = String::from_utf8_lossy(slice);
@@ -981,8 +953,7 @@ pub extern "C" fn init_hnsw_ptrdist_u16(
     max_nb_conn: usize,
     ef_const: usize,
     c_func: extern "C" fn(*const u16, *const u16, c_ulonglong) -> f32,
-) -> *const HnswApiu16
-{
+) -> *const HnswApiu16 {
     log::info!("init_ hnsw_ptrdist: ptr  {:?}", c_func);
     let c_dist = DistCFFI::<u16>::new(c_func);
     let h = Hnsw::<u16, DistCFFI<u16>>::new(max_nb_conn, 10000, 16, ef_const, c_dist);
@@ -1008,8 +979,7 @@ pub extern "C" fn init_hnsw_u8(
     ef_const: usize,
     namelen: usize,
     cdistname: *const u8,
-) -> *const HnswApiu8
-{
+) -> *const HnswApiu8 {
     log::debug!("entering init_hnsw_u8");
     let slice = unsafe { std::slice::from_raw_parts(cdistname, namelen) };
     let dname = String::from_utf8_lossy(slice);
@@ -1049,8 +1019,7 @@ pub extern "C" fn init_hnsw_ptrdist_u8(
     max_nb_conn: usize,
     ef_const: usize,
     c_func: extern "C" fn(*const u8, *const u8, c_ulonglong) -> f32,
-) -> *const HnswApiu8
-{
+) -> *const HnswApiu8 {
     log::info!("init_ hnsw_ptrdist: ptr  {:?}", c_func);
     let c_dist = DistCFFI::<u8>::new(c_func);
     let h = Hnsw::<u8, DistCFFI<u8>>::new(max_nb_conn, 10000, 16, ef_const, c_dist);
@@ -1070,8 +1039,7 @@ generate_file_dump!(file_dump_u8, HnswApiu8, u8);
 
 /// This structure provides a light description of the graph to be passed to C compatible languages.
 #[repr(C)]
-pub struct DescriptionFFI
-{
+pub struct DescriptionFFI {
     ///  value is 1 for Full 0 for Light
     pub dumpmode: u8,
     /// max number of connections in layers != 0
@@ -1092,10 +1060,8 @@ pub struct DescriptionFFI
     pub t_name: *const u8,
 }
 
-impl DescriptionFFI
-{
-    pub fn new() -> Self
-    {
+impl DescriptionFFI {
+    pub fn new() -> Self {
         DescriptionFFI {
             dumpmode: 0,
             max_nb_connection: 0,
@@ -1114,8 +1080,7 @@ impl DescriptionFFI
 /// returns a const pointer to a DescriptionFFI from a dump file, given filename length and pointer
 /// (*const u8)
 #[no_mangle]
-pub extern "C" fn load_hnsw_description(flen: usize, name: *const u8) -> *const DescriptionFFI
-{
+pub extern "C" fn load_hnsw_description(flen: usize, name: *const u8) -> *const DescriptionFFI {
     // opens file
     let slice = unsafe { std::slice::from_raw_parts(name, flen) };
     let filename = String::from_utf8_lossy(slice).into_owned();
@@ -1179,7 +1144,6 @@ pub extern "C" fn load_hnsw_description(flen: usize, name: *const u8) -> *const 
 
 /// to initialize rust logging from Julia
 #[no_mangle]
-pub extern "C" fn init_rust_log()
-{
+pub extern "C" fn init_rust_log() {
     let _res = env_logger::Builder::from_default_env().try_init();
 }

@@ -22,6 +22,12 @@ path = "src/lib.rs"
 [[example]]
 name = "random"
 path = "examples/random.rs"
+[[example]]
+name = "poem"
+path = "examples/poem.rs"
+[[example]]
+name = "embedding"
+path = "examples/embedding.rs"
 
 
 [[example]]
@@ -46,7 +52,7 @@ path = "examples/levensthein.rs"
 # default is version spec is ^ meaning can update up to max non null version number
 # cargo doc --no-deps avoid dependencies doc generation
 #
-
+rust-bert = "0.22.0"
 serde = { version = "1.0", features = ["derive"] }
 bincode = { version = "1.3" }
 
