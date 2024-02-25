@@ -1,4 +1,0 @@
-[submodule "lib/hnswlib-rs"]
-	path = lib/hnswlib-rs
-	url = https://github.com/jean-pierreBoth/hnswlib-rs.git
-	branch = master

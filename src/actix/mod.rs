@@ -1,6 +1,7 @@
+mod model;
 pub mod handlers;
 pub mod routes;
-
+pub mod table;
 use std::{
     io::Error,
     net::{Ipv4Addr, SocketAddr},
@@ -12,11 +13,9 @@ use actix_web::{
     middleware::{Compress, Logger},
     App, HttpResponse, HttpServer, Responder,
 };
-use axum::Router;
 use routes::dataset_api;
 use serde_json::json;
 use tokio::{net::TcpListener, signal};
-use tower_http::cors::{Any, CorsLayer};
 use tracing::info;
 use utoipa::OpenApi;
 use utoipa_rapidoc::RapiDoc;

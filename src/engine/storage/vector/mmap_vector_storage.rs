@@ -8,6 +8,7 @@ use std::sync::atomic::AtomicBool;
 
 use atomic_refcell::AtomicRefCell;
 use bitvec::prelude::BitSlice;
+#[cfg(target_os = "linux")]
 use cgroups_rs::Controller;
 
 use memory::mmap_ops;

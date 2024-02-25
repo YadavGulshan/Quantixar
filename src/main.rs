@@ -12,7 +12,7 @@ use tokio::main;
 use tracing::{event, Level};
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
-use http::init;
+use actix::init;
 
 mod cli;
 mod common;

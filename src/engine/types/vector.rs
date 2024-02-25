@@ -1,18 +1,17 @@
-use std::borrow::Cow;
-use std::collections::HashMap;
-
-use axum::extract::FromRef;
+#[cfg(target_os = "linux")]
 use procfs::WithCurrentSystemInfo;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::{borrow::Cow, collections::HashMap};
 use validator::Validate;
 
-use crate::common;
-use crate::common::operation_error::OperationError;
-use crate::engine::types::cow_vector::CowVector;
-use crate::engine::types::named_vector::NamedVectors;
-use crate::engine::types::types::{DEFAULT_VECTOR_NAME, DenseVector, VectorElementType};
-use crate::engine::utils::named_vector::transpose_map_into_named_vector;
+use crate::{
+  common, common::operation_error::OperationError, engine::{
+    types::{
+      cow_vector::CowVector, named_vector::NamedVectors, types::{DenseVector, VectorElementType, DEFAULT_VECTOR_NAME}
+    }, utils::named_vector::transpose_map_into_named_vector
+  }
+};
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize, JsonSchema)]
 #[serde(untagged, rename_all = "snake_case")]
@@ -59,7 +58,6 @@ impl<'a> TryFrom<VectorRef<'a>> for &'a [VectorElementType] {
   }
 }
 
-
 impl From<NamedVectorStruct> for Vector {
   fn from(value: NamedVectorStruct) -> Self {
     match value {
@@ -79,7 +77,6 @@ impl TryFrom<Vector> for DenseVector {
   }
 }
 
-
 impl<'a> From<&'a [VectorElementType]> for VectorRef<'a> {
   fn from(val: &'a [VectorElementType]) -> Self {
     VectorRef::Dense(val)
@@ -92,13 +89,11 @@ impl<'a> From<&'a DenseVector> for VectorRef<'a> {
   }
 }
 
-
 impl From<DenseVector> for Vector {
   fn from(val: DenseVector) -> Self {
     Vector::Dense(val)
   }
 }
-
 
 impl<'a> From<&'a Vector> for VectorRef<'a> {
   fn from(val: &'a Vector) -> Self {
@@ -136,7 +131,6 @@ impl<'a> TryInto<&'a [VectorElementType]> for &'a Vector {
     }
   }
 }
-
 
 pub fn default_vector(vec: Vec<VectorElementType>) -> NamedVectors<'static> {
   NamedVectors::from([(DEFAULT_VECTOR_NAME.to_owned(), vec)])
@@ -266,7 +260,6 @@ impl From<NamedVector> for NamedVectorStruct {
     NamedVectorStruct::Dense(v)
   }
 }
-
 
 pub trait Named {
   fn get_name(&self) -> &str;
