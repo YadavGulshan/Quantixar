@@ -409,10 +409,13 @@ impl From<Vector> for QueryVector {
   }
 }
 
-impl Into<Vector> for QueryVector {
-  fn into(self) -> Vector {
-    match self {
-      QueryVector::Nearest(v) => v,
+
+impl AsRef<[VectorElementType]> for QueryVector {
+    fn as_ref(&self) -> &[VectorElementType] {
+        match self {
+            QueryVector::Nearest(vector) => match vector {
+                Vector::Dense(dense_vector) => dense_vector.as_slice(),
+            },
+        }
     }
-  }
 }

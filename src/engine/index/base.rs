@@ -27,7 +27,7 @@ pub enum VectorIndexEnum<'a> {
   HNSWMmap(Hnsw<'a, VectorElementType, DistL2>),
 }
 
-impl VectorIndexEnum {
+impl<'a> VectorIndexEnum<'a> {
   pub fn is_index(&self) -> bool {
     match self {
       _ => true,
@@ -35,7 +35,7 @@ impl VectorIndexEnum {
   }
 }
 
-impl VectorIndex for VectorIndexEnum {
+impl<'a> VectorIndex for VectorIndexEnum<'a> {
   fn search(
     &self,
     vectors: &[&QueryVector],
@@ -44,34 +44,30 @@ impl VectorIndex for VectorIndexEnum {
   ) -> OperationResult<Vec<Neighbour>> {
     match self {
       VectorIndexEnum::HNSWMmap(v) => {
-        println!("vector {:?}", vectors.into());
-        let neighbours = v.search(vectors.into(), top, 24);
+        let f32_vectors: Vec<VectorElementType> = vectors.iter()
+                .flat_map(|qv| qv.as_ref()) // Assuming QueryVector implements AsRef<[f32]>
+                .copied()
+                .collect();
+
+        let neighbours = v.search(f32_vectors.as_slice(), top, 24);
         Ok(neighbours)
       }
     }
   }
 
   fn build_index(&mut self, stopped: &AtomicBool) -> OperationResult<()> {
-    match self {
-      VectorIndexEnum::HNSWMmap(v) => v.build_index(stopped),
-    }
+    todo!()
   }
 
   fn files(&self) -> Vec<PathBuf> {
-    match self {
-      VectorIndexEnum::HNSWMmap(v) => v.files(),
-    }
+    todo!()
   }
 
   fn indexed_vector_count(&self) -> usize {
-    match self {
-      VectorIndexEnum::HNSWMmap(v) => v.indexed_vector_count(),
-    }
+    todo!()
   }
 
   fn update_vector(&mut self, id: PointOffsetType, vector: VectorRef) -> OperationResult<()> {
-    match self {
-      VectorIndexEnum::HNSWMmap(v) => v.update_vector(id, vector),
-    }
+    todo!()
   }
 }
