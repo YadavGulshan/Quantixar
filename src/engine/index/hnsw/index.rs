@@ -14,14 +14,14 @@ use crate::{
     engine::{index::hnsw::config::HnswGraphConfig, storage::vector::base::VectorStorageEnum},
 };
 
-pub struct HNSWIndex<'b, T: Clone + Send + Sync + 'b, D: Distance<T> + Send + Sync> {
+pub struct HNSWIndex<'b, D: Distance<f32> + Send + Sync> {
     vector_storage: Arc<AtomicRefCell<VectorStorageEnum>>,
     config: HnswGraphConfig,
     path: PathBuf,
-    hnsw: Hnsw<'b, T, D>,
+    hnsw: Hnsw<'b, f32, D>,
 }
 
-impl<'b, T: Clone + Send + Sync + 'b, D: Distance<T> + Send + Sync> HNSWIndex<'b, T, D> {
+impl<'b, D: Distance<f32> + Send + Sync> HNSWIndex<'b, D> {
     pub fn new(
         vector_storage: Arc<AtomicRefCell<VectorStorageEnum>>,
         path: &Path,
@@ -53,7 +53,7 @@ impl<'b, T: Clone + Send + Sync + 'b, D: Distance<T> + Send + Sync> HNSWIndex<'b
         let nb_layer = 16.min((nb_elem as f32).ln().trunc() as usize);
         let ef_c = config.ef_construct;
 
-        let hnsw = Hnsw::<T, D>::new(
+        let hnsw = Hnsw::<f32, D>::new(
             config.max_nb_connection,
             config.m,
             config.max_layer,
@@ -87,7 +87,7 @@ impl<'b, T: Clone + Send + Sync + 'b, D: Distance<T> + Send + Sync> HNSWIndex<'b
         let total_vector_count = vector_storage.total_vector_count();
         let deleted_bitslice = vector_storage.deleted_vector_bitslice();
 
-        let data_for_insertion: Vec<(&[f32], usize)> = vector_storage
+        let data_for_insertion = vector_storage
             .get_dense_storage()
             .vectors()
             .get_all_vectors();
@@ -97,5 +97,29 @@ impl<'b, T: Clone + Send + Sync + 'b, D: Distance<T> + Send + Sync> HNSWIndex<'b
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::engine::storage::vector::dense_vector_storage::SimpleDenseVectorStorage;
+    use crate::engine::types::distance::Distance;
+
+    #[test]
+    fn test_hnsw_index() {
+        let dim = 3;
+
+        let coloumn_name = "test";
+        use hnsw_rs::dist::DistL2;
+
+        // Assuming `dim` is the dimension of your vectors and `path` is a valid path
+        let vector_storage = Arc::new(AtomicRefCell::new(VectorStorageEnum::DenseSimple(
+            SimpleDenseVectorStorage::new(dim, Distance::Euclidean, "test"),
+        )));
+        let path = Path::new("test");
+        let mut hnsw_index = HNSWIndex::new(vector_storage, path, dim, 10, DistL2).unwrap();
+        hnsw_index.build_graph(false).unwrap();
+        hnsw_index.save_config().unwrap();
     }
 }

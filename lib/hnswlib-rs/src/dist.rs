@@ -16,7 +16,7 @@ use std::{arch::is_aarch64_feature_detected, os::raw::*};
 
 // use cfg_if;
 #[cfg(target_feature = "neon")]
-use crate::dist_neon::{euclid_similarity_neon, manhattan_similarity_neon, dot_similarity_neon};
+use crate::dist_neon::{dot_similarity_neon, euclid_similarity_neon, manhattan_similarity_neon};
 use num_traits::float::*;
 #[cfg(feature = "stdsimd")]
 use packed_simd::*;
@@ -1212,8 +1212,11 @@ mod tests {
         let vb: Vec<f32> = vec![4.234, -6.678, 10.367, 1.234, -1.678, 1.367];
         //
         let dist = DistL1.eval(&va, &vb);
-        let dist_check =
-            va.iter().zip(vb.iter()).map(|t| (*t.0 as f32 - *t.1 as f32).abs()).sum::<f32>();
+        let dist_check = va
+            .iter()
+            .zip(vb.iter())
+            .map(|t| (*t.0 as f32 - *t.1 as f32).abs())
+            .sum::<f32>();
         //
         log::info!(" dist : {:.5e} dist_check : {:.5e}", dist, dist_check);
         assert!((dist - dist_check).abs() / dist_check < 1.0e-5);
@@ -1392,12 +1395,21 @@ mod tests {
                 // generer 2 va et vb s des vecteurs<i32> de taille i  avec des valeurs entre -imax
                 // et + imax et controler les resultat
                 let between = Uniform::<i32>::from(-imax..imax);
-                let va: Vec<i32> = (0..i).into_iter().map(|_| between.sample(&mut rng)).collect();
-                let vb: Vec<i32> = (0..i).into_iter().map(|_| between.sample(&mut rng)).collect();
+                let va: Vec<i32> = (0..i)
+                    .into_iter()
+                    .map(|_| between.sample(&mut rng))
+                    .collect();
+                let vb: Vec<i32> = (0..i)
+                    .into_iter()
+                    .map(|_| between.sample(&mut rng))
+                    .collect();
                 let simd_dist = unsafe { distance_hamming_i32::<Avx2>(&va, &vb) } as f32;
 
-                let easy_dist: u32 =
-                    va.iter().zip(vb.iter()).map(|(a, b)| if a != b { 1 } else { 0 }).sum();
+                let easy_dist: u32 = va
+                    .iter()
+                    .zip(vb.iter())
+                    .map(|(a, b)| if a != b { 1 } else { 0 })
+                    .sum();
                 let easy_dist = easy_dist as f32 / va.len() as f32;
                 log::debug!(
                     "test size {:?} simd  exact = {:?} {:?}",
@@ -1427,15 +1439,24 @@ mod tests {
             // generer 2 va et vb s des vecteurs<i32> de taille i  avec des valeurs entre -imax et +
             // imax et controler les resultat
             let between = Uniform::<f64>::from(-fmax..fmax);
-            let va: Vec<f64> = (0..i).into_iter().map(|_| between.sample(&mut rng)).collect();
-            let mut vb: Vec<f64> = (0..i).into_iter().map(|_| between.sample(&mut rng)).collect();
+            let va: Vec<f64> = (0..i)
+                .into_iter()
+                .map(|_| between.sample(&mut rng))
+                .collect();
+            let mut vb: Vec<f64> = (0..i)
+                .into_iter()
+                .map(|_| between.sample(&mut rng))
+                .collect();
             // reset half of vb to va
             for i in 0..i / 2 {
                 vb[i] = va[i];
             }
 
-            let easy_dist: u32 =
-                va.iter().zip(vb.iter()).map(|(a, b)| if a != b { 1 } else { 0 }).sum();
+            let easy_dist: u32 = va
+                .iter()
+                .zip(vb.iter())
+                .map(|(a, b)| if a != b { 1 } else { 0 })
+                .sum();
             let h_dist = DistHamming.eval(&va, &vb);
             let easy_dist = easy_dist as f32 / va.len() as f32;
             let j_exact = ((i / 2) as f32) / (i as f32);
@@ -1475,15 +1496,24 @@ mod tests {
             // generer 2 va et vb s des vecteurs<i32> de taille i  avec des valeurs entre -imax et +
             // imax et controler les resultat
             let between = Uniform::<f32>::from(-fmax..fmax);
-            let va: Vec<f32> = (0..i).into_iter().map(|_| between.sample(&mut rng)).collect();
-            let mut vb: Vec<f32> = (0..i).into_iter().map(|_| between.sample(&mut rng)).collect();
+            let va: Vec<f32> = (0..i)
+                .into_iter()
+                .map(|_| between.sample(&mut rng))
+                .collect();
+            let mut vb: Vec<f32> = (0..i)
+                .into_iter()
+                .map(|_| between.sample(&mut rng))
+                .collect();
             // reset half of vb to va
             for i in 0..i / 2 {
                 vb[i] = va[i];
             }
 
-            let easy_dist: u32 =
-                va.iter().zip(vb.iter()).map(|(a, b)| if a != b { 1 } else { 0 }).sum();
+            let easy_dist: u32 = va
+                .iter()
+                .zip(vb.iter())
+                .map(|(a, b)| if a != b { 1 } else { 0 })
+                .sum();
             let h_dist = DistHamming.eval(&va, &vb);
             let easy_dist = easy_dist as f32 / va.len() as f32;
             let j_exact = ((i / 2) as f32) / (i as f32);
@@ -1530,9 +1560,14 @@ mod tests {
                 // generer 2 va et vb s des vecteurs<i32> de taille i  avec des valeurs entre -imax
                 // et + imax et controler les resultat
                 let between = Uniform::<f64>::from(-fmax..fmax);
-                let va: Vec<f64> = (0..i).into_iter().map(|_| between.sample(&mut rng)).collect();
-                let mut vb: Vec<f64> =
-                    (0..i).into_iter().map(|_| between.sample(&mut rng)).collect();
+                let va: Vec<f64> = (0..i)
+                    .into_iter()
+                    .map(|_| between.sample(&mut rng))
+                    .collect();
+                let mut vb: Vec<f64> = (0..i)
+                    .into_iter()
+                    .map(|_| between.sample(&mut rng))
+                    .collect();
                 // reset half of vb to va
                 for i in 0..i / 2 {
                     vb[i] = va[i];
@@ -1540,8 +1575,11 @@ mod tests {
                 let simd_dist = unsafe { distance_hamming_f64::<Avx2>(&va, &vb) } as f32;
 
                 let j_exact = ((i / 2) as f32) / (i as f32);
-                let easy_dist: u32 =
-                    va.iter().zip(vb.iter()).map(|(a, b)| if a != b { 1 } else { 0 }).sum();
+                let easy_dist: u32 = va
+                    .iter()
+                    .zip(vb.iter())
+                    .map(|(a, b)| if a != b { 1 } else { 0 })
+                    .sum();
                 let h_dist = DistHamming.eval(&va, &vb);
                 let easy_dist = easy_dist as f32 / va.len() as f32;
                 log::debug!(
@@ -1585,12 +1623,21 @@ mod tests {
             // generer 2 va et vb s des vecteurs<i32> de taille i  avec des valeurs entre -imax et +
             // imax et controler les resultat
             let between = Uniform::<u32>::from(0..imax);
-            let va: Vec<u32> = (0..i).into_iter().map(|_| between.sample(&mut rng)).collect();
-            let vb: Vec<u32> = (0..i).into_iter().map(|_| between.sample(&mut rng)).collect();
+            let va: Vec<u32> = (0..i)
+                .into_iter()
+                .map(|_| between.sample(&mut rng))
+                .collect();
+            let vb: Vec<u32> = (0..i)
+                .into_iter()
+                .map(|_| between.sample(&mut rng))
+                .collect();
             let simd_dist = distance_jaccard_u32_16_simd(&va, &vb);
 
-            let easy_dist: u32 =
-                va.iter().zip(vb.iter()).map(|(a, b)| if a != b { 1 } else { 0 }).sum();
+            let easy_dist: u32 = va
+                .iter()
+                .zip(vb.iter())
+                .map(|(a, b)| if a != b { 1 } else { 0 })
+                .sum();
             let easy_dist = easy_dist as f32 / va.len() as f32;
             log::debug!(
                 "test size {:?} simd  exact = {:?} {:?}",
@@ -1620,12 +1667,21 @@ mod tests {
             // generer 2 va et vb s des vecteurs<i32> de taille i  avec des valeurs entre -imax et +
             // imax et controler les resultat
             let between = Uniform::<u64>::from(0..imax);
-            let va: Vec<u64> = (0..i).into_iter().map(|_| between.sample(&mut rng)).collect();
-            let vb: Vec<u64> = (0..i).into_iter().map(|_| between.sample(&mut rng)).collect();
+            let va: Vec<u64> = (0..i)
+                .into_iter()
+                .map(|_| between.sample(&mut rng))
+                .collect();
+            let vb: Vec<u64> = (0..i)
+                .into_iter()
+                .map(|_| between.sample(&mut rng))
+                .collect();
             let simd_dist = distance_jaccard_u64_8_simd(&va, &vb);
 
-            let easy_dist: u64 =
-                va.iter().zip(vb.iter()).map(|(a, b)| if a != b { 1 } else { 0 }).sum();
+            let easy_dist: u64 = va
+                .iter()
+                .zip(vb.iter())
+                .map(|(a, b)| if a != b { 1 } else { 0 })
+                .sum();
             let easy_dist = easy_dist as f32 / va.len() as f32;
             println!(
                 "test size {:?} simd  exact = {:?} {:?}",

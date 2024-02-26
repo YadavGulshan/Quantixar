@@ -89,6 +89,26 @@ pub fn open_simple_vector_storage(
 }
 
 impl SimpleDenseVectorStorage {
+    pub fn new(dim: usize, distance: Distance, coloumn_name: &str) -> SimpleDenseVectorStorage {
+        let vectors = ChunkedVectors::new(dim);
+        let db_wrapper = DatabaseColumnWrapper::new(
+            Arc::new(RwLock::new(DB::open_default(coloumn_name).unwrap())),
+            coloumn_name,
+        );
+        SimpleDenseVectorStorage {
+            dim,
+            distance,
+            vectors,
+            db_wrapper,
+            update_buffer: StoredRecord {
+                deleted: false,
+                vector: vec![0.; dim],
+            },
+            deleted: BitVec::new(),
+            deleted_count: 0,
+        }
+    }
+
     /// Set deleted flag for given key. Returns previous deleted state.
     #[inline]
     fn set_deleted(&mut self, key: PointOffsetType, deleted: bool) -> bool {
