@@ -134,5 +134,7 @@ mod tests {
     assert_eq!(vectors.get(k1), v1.as_slice());
     assert_eq!(vectors.get(k2), v2.as_slice());
     assert_eq!(vectors.get(k3), v3.as_slice());
+
+    println!("all vectors: {:?}", vectors)
   }
 }

@@ -14,10 +14,9 @@
 /// The L1 and Cosine distance are implemented for u16, i32, i64, f32, f64
 use std::{arch::is_aarch64_feature_detected, os::raw::*};
 
-use crate::dist_neon::dot_similarity_neon;
 // use cfg_if;
 #[cfg(target_feature = "neon")]
-use crate::dist_neon::{euclid_similarity_neon, manhattan_similarity_neon};
+use crate::dist_neon::{euclid_similarity_neon, manhattan_similarity_neon, dot_similarity_neon};
 use num_traits::float::*;
 #[cfg(feature = "stdsimd")]
 use packed_simd::*;
