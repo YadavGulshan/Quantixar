@@ -6,7 +6,7 @@ use std::{
 
 use atomic_refcell::AtomicRefCell;
 
-use hnsw_rs::{dist::Distance, hnsw::Hnsw};
+use hnsw_rs::{dist::Distance, hnsw::{Hnsw, Neighbour}};
 
 use crate::engine::storage::vector::base::VectorStorage;
 use crate::{
@@ -45,6 +45,8 @@ impl<'b, D: Distance<f32> + Send + Sync> HNSWIndex<'b, D> {
                 false,
                 false,
                 dataset_size,
+                100,
+                10
             )
         };
 
@@ -92,11 +94,24 @@ impl<'b, D: Distance<f32> + Send + Sync> HNSWIndex<'b, D> {
             .vectors()
             .get_all_vectors();
 
+        dbg!(total_vector_count);
         if parallel_insertion {
+            log::info!("Performing parallel insertion");
             self.hnsw.parallel_insert_slice(&data_for_insertion);
+        } else {
+            log::info!("Performing serial insertion");
+            for d in data_for_insertion {
+                self.hnsw.insert_slice(d);
+            }
         }
 
         Ok(())
+    }
+
+    pub fn search(&self, query: &[f32], k: usize) -> OperationResult<Vec<usize>> {
+        let neighbours: Vec<Neighbour> = self.hnsw.search(&query, k, self.config.ef_construct);
+        let result: Vec<usize> = neighbours.iter().map(|x| x.d_id).collect();
+        Ok(result)
     }
 }
 
@@ -121,5 +136,10 @@ mod test {
         let mut hnsw_index = HNSWIndex::new(vector_storage, path, dim, 10, DistL2).unwrap();
         hnsw_index.build_graph(false).unwrap();
         hnsw_index.save_config().unwrap();
+
+        let query = vec![0.0, 0.0, 0.0];
+        let k = 3;
+        let result = hnsw_index.search(&query, k).unwrap();
+        println!("{:?}", result);
     }
 }
