@@ -312,6 +312,8 @@ use rand::prelude::*;
 /// a struct to randomly generate a level for an item according to an exponential law
 /// of parameter given by scale.
 /// The distribution is constrained to be in [0..maxlevel[
+#[derive(Clone)]
+
 pub struct LayerGenerator {
     rng: Arc<Mutex<rand::rngs::StdRng>>,
     unif: Uniform<f64>,
@@ -364,6 +366,7 @@ type Layer<'b, T> = Vec<Arc<Point<'b, T>>>;
 
 /// a structure for indexation of points in layer
 #[allow(unused)]
+#[derive(Clone)]
 pub struct PointIndexation<'b, T: Clone + Send + Sync> {
     /// max number of connection for a point at a layer
     pub(crate) max_nb_connection: usize,
@@ -713,6 +716,7 @@ impl<'a, 'b, T: Clone + Send + Sync + 'b> Iterator for IterPointLayer<'a, 'b, T>
 /// as described in trait AnnT.
 ///
 /// Other functions are mainly for others crate to get access to some fields.
+#[derive(Clone)]
 pub struct Hnsw<'b, T: Clone + Send + Sync + 'b, D: Distance<T>> {
     /// asked number of candidates in search
     pub(crate) ef_construction: usize,

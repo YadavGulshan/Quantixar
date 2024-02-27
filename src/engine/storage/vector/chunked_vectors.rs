@@ -95,6 +95,11 @@ impl<T: Clone + Copy + Send + Sync + Default> ChunkedVectors<T> {
             chunk_data.resize_with(idx + self.dim, Default::default);
         }
         let data = &mut chunk_data[idx..idx + self.dim];
+        log::debug!(
+            "length of data: {} and vector: {}",
+            data.len(),
+            vector.len()
+        );
         data.copy_from_slice(vector);
         Ok(())
     }

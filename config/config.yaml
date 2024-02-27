@@ -22,6 +22,8 @@ storage:
   # Maximum number of concurrent updates to shard replicas
   # If `null` - maximum concurrency is used.
   update_concurrency: null
+  # There to two types of vector storages available: "Dense" and "Memmap"
+  vector_storage_type: "Dense"
 
   # Write-ahead-log related configuration
   wal:
@@ -120,6 +122,9 @@ storage:
     on_disk: false
     # Custom M param for hnsw graph built for payload index. If not set, default M will be used.
     payload_m: null
+    # available distance metrics: "Euclidean", "Manhattan", "Cosine", "Jaccard", "Hamming", "DotProduct", "JensenShannon"
+    distance: Euclidean
+    config_path: /tmp/hnsw_config
 
 service:
   # Maximum size of POST data in a single request in megabytes

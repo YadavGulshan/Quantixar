@@ -75,6 +75,7 @@ tempfile = "3.10.0"
 bincode = "1.3.3"
 parking_lot = "0.12.1"
 hdf5 = "0.8.1"
+actix-web-validator = "5.0.1"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 cgroups-rs = "0.3"

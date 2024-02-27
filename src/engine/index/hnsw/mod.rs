@@ -1,2 +1,2 @@
-mod index;
 mod config;
+pub mod index;

@@ -2,32 +2,43 @@ use std::{
     fs::create_dir_all,
     path::{Path, PathBuf},
     sync::Arc,
+    time::SystemTime,
 };
 
 use atomic_refcell::AtomicRefCell;
 
-use hnsw_rs::{dist::Distance, hnsw::{Hnsw, Neighbour}};
+use hnsw_rs::{
+    dist::{DistL2, Distance},
+    hnsw::{Hnsw, Neighbour},
+};
 
-use crate::engine::storage::vector::base::VectorStorage;
+use crate::{
+    actix::handlers::vector,
+    engine::{
+        storage::vector::base::VectorStorage,
+        types::{types::VectorElementType, vector::VectorRef},
+    },
+};
 use crate::{
     common::operation_error::OperationResult,
     engine::{index::hnsw::config::HnswGraphConfig, storage::vector::base::VectorStorageEnum},
 };
 
-pub struct HNSWIndex<'b, D: Distance<f32> + Send + Sync> {
+#[derive(Clone)]
+pub struct HNSWIndex<'b> {
     vector_storage: Arc<AtomicRefCell<VectorStorageEnum>>,
     config: HnswGraphConfig,
     path: PathBuf,
-    hnsw: Hnsw<'b, f32, D>,
+    hnsw: Hnsw<'b, f32, DistL2>,
 }
 
-impl<'b, D: Distance<f32> + Send + Sync> HNSWIndex<'b, D> {
+impl<'b> HNSWIndex<'b> {
     pub fn new(
         vector_storage: Arc<AtomicRefCell<VectorStorageEnum>>,
         path: &Path,
         data_dimension: usize,
         dataset_size: usize,
-        dist_f: D,
+        dist_f: DistL2,
     ) -> OperationResult<Self> {
         create_dir_all(path)?;
         let config_path = HnswGraphConfig::get_config_path(path);
@@ -46,7 +57,7 @@ impl<'b, D: Distance<f32> + Send + Sync> HNSWIndex<'b, D> {
                 false,
                 dataset_size,
                 100,
-                10
+                10,
             )
         };
 
@@ -55,7 +66,7 @@ impl<'b, D: Distance<f32> + Send + Sync> HNSWIndex<'b, D> {
         let nb_layer = 16.min((nb_elem as f32).ln().trunc() as usize);
         let ef_c = config.ef_construct;
 
-        let hnsw = Hnsw::<f32, D>::new(
+        let hnsw = Hnsw::<f32, DistL2>::new(
             config.max_nb_connection,
             config.m,
             config.max_layer,
@@ -105,6 +116,28 @@ impl<'b, D: Distance<f32> + Send + Sync> HNSWIndex<'b, D> {
             }
         }
 
+        Ok(())
+    }
+
+    pub fn add(&mut self, vector: &[VectorElementType]) -> OperationResult<()> {
+        log::info!("Adding vector to hnsw index");
+        let key = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos() as usize;
+        let vector_ref = VectorRef::Dense(vector);
+        match self
+            .vector_storage
+            .borrow_mut()
+            .insert_vector(key as u32, vector_ref)
+        {
+            Ok(_) => {}
+            Err(e) => {
+                return Err(e);
+            }
+        };
+        let data_with_id: (&[VectorElementType], usize) = (vector, key);
+        self.hnsw.insert_slice(data_with_id);
         Ok(())
     }
 

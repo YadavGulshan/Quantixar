@@ -1,0 +1,418 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'io'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=io"
+                ],
+                "filter": {
+                    "name": "io",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'memory'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=memory"
+                ],
+                "filter": {
+                    "name": "memory",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'quantixar'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=quantixar",
+                    "--package=quantixar"
+                ],
+                "filter": {
+                    "name": "quantixar",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'quantixar'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=quantixar",
+                    "--package=quantixar"
+                ],
+                "filter": {
+                    "name": "quantixar",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'hnsw_rs'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=hnsw_rs"
+                ],
+                "filter": {
+                    "name": "hnsw_rs",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'random'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=random",
+                    "--package=hnsw_rs"
+                ],
+                "filter": {
+                    "name": "random",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'random'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=random",
+                    "--package=hnsw_rs"
+                ],
+                "filter": {
+                    "name": "random",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'poem'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=poem",
+                    "--package=hnsw_rs"
+                ],
+                "filter": {
+                    "name": "poem",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'poem'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=poem",
+                    "--package=hnsw_rs"
+                ],
+                "filter": {
+                    "name": "poem",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'embedding'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=embedding",
+                    "--package=hnsw_rs"
+                ],
+                "filter": {
+                    "name": "embedding",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'embedding'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=embedding",
+                    "--package=hnsw_rs"
+                ],
+                "filter": {
+                    "name": "embedding",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'ann-glove'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=ann-glove",
+                    "--package=hnsw_rs"
+                ],
+                "filter": {
+                    "name": "ann-glove",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'ann-glove'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=ann-glove",
+                    "--package=hnsw_rs"
+                ],
+                "filter": {
+                    "name": "ann-glove",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'ann-mnist'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=ann-mnist",
+                    "--package=hnsw_rs"
+                ],
+                "filter": {
+                    "name": "ann-mnist",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'ann-mnist'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=ann-mnist",
+                    "--package=hnsw_rs"
+                ],
+                "filter": {
+                    "name": "ann-mnist",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'ann-sift1m'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=ann-sift1m",
+                    "--package=hnsw_rs"
+                ],
+                "filter": {
+                    "name": "ann-sift1m",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'ann-sift1m'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=ann-sift1m",
+                    "--package=hnsw_rs"
+                ],
+                "filter": {
+                    "name": "ann-sift1m",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'levenshtein'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=levenshtein",
+                    "--package=hnsw_rs"
+                ],
+                "filter": {
+                    "name": "levenshtein",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'levenshtein'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=levenshtein",
+                    "--package=hnsw_rs"
+                ],
+                "filter": {
+                    "name": "levenshtein",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'deallocation_test'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=deallocation_test",
+                    "--package=hnsw_rs"
+                ],
+                "filter": {
+                    "name": "deallocation_test",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'filtertest'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=filtertest",
+                    "--package=hnsw_rs"
+                ],
+                "filter": {
+                    "name": "filtertest",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'serpar'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=serpar",
+                    "--package=hnsw_rs"
+                ],
+                "filter": {
+                    "name": "serpar",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

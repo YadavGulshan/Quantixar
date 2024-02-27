@@ -1,6 +1,8 @@
 use actix_web::{get, web, HttpResponse, Responder};
 use serde_json::json;
 
+use crate::actix::handlers::vector::add_vector;
+
 #[utoipa::path(
     get,
     path = "/",
@@ -18,5 +20,5 @@ pub async fn index() -> impl Responder {
 }
 
 pub fn config_index_api(cfg: &mut web::ServiceConfig) {
-    cfg.service(index);
+    cfg.service(index).service(add_vector);
 }

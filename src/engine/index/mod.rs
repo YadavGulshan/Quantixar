@@ -1,5 +1,5 @@
-pub mod index;
-mod retrieval;
 mod base;
+pub mod hnsw;
+pub mod index;
 mod plain;
-mod hnsw;
+mod retrieval;
