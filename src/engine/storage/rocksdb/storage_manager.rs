@@ -44,15 +44,15 @@ impl StorageManager
     }
   }
 
-  pub fn check_db_exists(&self, path: &Path) -> bool
+  pub fn check_db_exists(path: &Path) -> bool
   {
     let db_file = path.join("CURRENT");
     db_file.exists()
   }
 
-  pub fn open_db_with_existing_cf(&self, path: &Path) -> Result<Arc<RwLock<DB>>, rocksdb::Error>
+  pub fn open_db_with_existing_cf(path: &Path) -> Result<Arc<RwLock<DB>>, rocksdb::Error>
   {
-    let existing_column_families = if self.check_db_exists(path) {
+    let existing_column_families = if Self::check_db_exists(path) {
       DB::list_cf(&db_options(), path)?
     } else {
       vec![]

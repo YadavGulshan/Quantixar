@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 
+use actix_web::dev::Path;
 use atomic_refcell::AtomicRefCell;
 use bitvec::prelude::{BitSlice, BitVec};
 use log::debug;
@@ -13,6 +14,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::common::operation_error::{check_process_stopped, OperationError, OperationResult};
 use crate::engine::storage::rocksdb::rocksdb_wrapper::DatabaseColumnWrapper;
+use crate::engine::storage::rocksdb::storage_manager::StorageManager;
 use crate::engine::storage::rocksdb::Flusher;
 use crate::engine::storage::vector::base::{DenseVectorStorage, VectorStorage, VectorStorageEnum};
 use crate::engine::storage::vector::bitvec::bitvec_set_deleted;
@@ -91,8 +93,9 @@ pub fn open_simple_vector_storage(
 impl SimpleDenseVectorStorage {
     pub fn new(dim: usize, distance: Distance, coloumn_name: &str) -> SimpleDenseVectorStorage {
         let vectors = ChunkedVectors::new(dim);
+        let db = StorageManager::open_db_with_existing_cf(&std::path::Path::new(coloumn_name)).unwrap();
         let db_wrapper = DatabaseColumnWrapper::new(
-            Arc::new(RwLock::new(DB::open_default(coloumn_name).unwrap())),
+            db,
             coloumn_name,
         );
         db_wrapper.create_column_family_if_not_exists().unwrap();
