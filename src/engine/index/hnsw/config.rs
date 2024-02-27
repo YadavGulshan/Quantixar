@@ -22,6 +22,14 @@ pub struct HnswGraphConfig {
   pub max_layer: usize,
   #[serde(default)]
   pub data_dimension: usize,
+
+  /// Maximum number of neighbours to consider when searching
+  #[serde(default)]
+  pub knbn_max: usize,
+
+  /// Number of neighbours to consider when searching
+  #[serde(default)]
+  pub knbn: usize,
   #[serde(default)]
   pub searching: bool,
   #[serde(default)]
@@ -41,7 +49,9 @@ impl HnswGraphConfig {
     data_dimension: usize,
     searching: bool,
     extend_candidates: bool,
-    data_set_size: usize
+    data_set_size: usize,
+    knbn_max: usize,
+    knbn: usize
   ) -> Self {
     HnswGraphConfig {
       m,
@@ -53,7 +63,9 @@ impl HnswGraphConfig {
       data_dimension,
       searching,
       extend_candidates,
-      dataset_size: data_set_size
+      dataset_size: data_set_size,
+      knbn_max,
+      knbn
     }
   }
 
