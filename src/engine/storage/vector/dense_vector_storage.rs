@@ -95,6 +95,7 @@ impl SimpleDenseVectorStorage {
             Arc::new(RwLock::new(DB::open_default(coloumn_name).unwrap())),
             coloumn_name,
         );
+        db_wrapper.create_column_family_if_not_exists().unwrap();
         SimpleDenseVectorStorage {
             dim,
             distance,
