@@ -44,7 +44,7 @@ use crate::{
 
 pub async fn init(settings: Settings) -> Result<(), Error> {
     let simple_dense_vector_stroage = SimpleDenseVectorStorage::new(
-        5,
+        384,
         crate::engine::types::distance::Distance::Euclidean,
         "quantixar",
     );
@@ -54,7 +54,7 @@ pub async fn init(settings: Settings) -> Result<(), Error> {
 
     let path_to_rocks_db = "rockdb";
     let path = std::path::Path::new(path_to_rocks_db);
-    let data_dimension = 5;
+    let data_dimension = 384;
     let dataset_size = 10;
     let dist_f = hnsw_rs::dist::DistL2;
     let engine = match HNSWIndex::new(vector_storage, path, data_dimension, dataset_size, dist_f) {

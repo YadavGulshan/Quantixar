@@ -205,6 +205,7 @@ impl VectorStorage for VectorStorageEnum {
         }
     }
 }
+
 impl VectorStorageEnum {
     pub fn get_dense_storage(&self) -> &SimpleDenseVectorStorage {
         match self {
