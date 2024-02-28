@@ -9,7 +9,7 @@ use atomic_refcell::AtomicRefCell;
 
 use hnsw_rs::{
     dist::{DistCosine, DistL2, Distance},
-    hnsw::{Hnsw, Neighbour},
+    hnsw::{self, Hnsw, Neighbour},
 };
 use serde_json::{Map, Value};
 
@@ -77,12 +77,14 @@ impl<'b> HNSWIndex<'b> {
             dist_f,
         );
 
-        Ok(HNSWIndex {
+        let hnsw_index = HNSWIndex {
             vector_storage,
             config,
             path: path.to_owned(),
             hnsw,
-        })
+        };
+
+        Ok(hnsw_index)
     }
 
     fn save_config(&self) -> OperationResult<()> {
@@ -96,6 +98,7 @@ impl<'b> HNSWIndex<'b> {
     }
 
     pub fn build_graph(&mut self, parallel_insertion: bool) -> OperationResult<()> {
+        log::info!("Building HNSW graph");
         let vector_storage = self.vector_storage.borrow();
         self.hnsw
             .set_extend_candidates(self.config.extend_candidates);

@@ -1,6 +1,4 @@
-#![feature(try_trait_v2)]
 #![allow(unused_imports, dead_code, unused_variables)]
-
 extern crate core;
 
 mod actix;

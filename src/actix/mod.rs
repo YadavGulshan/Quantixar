@@ -52,13 +52,18 @@ pub async fn init(settings: Settings) -> Result<(), Error> {
         simple_dense_vector_stroage,
     )));
 
-    let path_to_rocks_db = "rockdb";
-    let path = std::path::Path::new(path_to_rocks_db);
+    let index_dir = "index_dir";
+    let index_dir_path = std::path::Path::new(index_dir);
     let data_dimension = 512;
     let dataset_size = 10;
     let dist_f = hnsw_rs::dist::DistCosine;
-    let engine = match HNSWIndex::new(vector_storage, path, data_dimension, dataset_size, dist_f) {
-        Ok(engine) => Arc::new(Mutex::new(engine)),
+    let engine = match HNSWIndex::new(vector_storage, index_dir_path, data_dimension, dataset_size, dist_f) {
+        Ok(mut engine) => {
+            match engine.build_graph(true) {
+                Ok(_) => Arc::new(Mutex::new(engine)),
+                Err(e) => panic!("Error building HNSWIndex: {}", e),
+            }
+        },
         Err(e) => panic!("Error creating HNSWIndex: {}", e),
     };
     let server = HttpServer::new(move || {

@@ -1,5 +1,5 @@
 use std::{
-  convert::Infallible, io::{Error, Read, Write}, ops::FromResidual, path::Path
+  convert::Infallible, io::{Error, Read, Write}, path::Path
 };
 
 use actix_multipart::{
