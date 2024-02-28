@@ -8,7 +8,7 @@ use std::{
 use atomic_refcell::AtomicRefCell;
 
 use hnsw_rs::{
-    dist::{DistL2, Distance},
+    dist::{DistCosine, DistL2, Distance},
     hnsw::{Hnsw, Neighbour},
 };
 use serde_json::{Map, Value};
@@ -33,7 +33,7 @@ pub struct HNSWIndex<'b> {
     vector_storage: Arc<AtomicRefCell<VectorStorageEnum>>,
     config: HnswGraphConfig,
     path: PathBuf,
-    hnsw: Hnsw<'b, f32, DistL2>,
+    hnsw: Hnsw<'b, f32, DistCosine>,
 }
 
 impl<'b> HNSWIndex<'b> {
@@ -42,7 +42,7 @@ impl<'b> HNSWIndex<'b> {
         path: &Path,
         data_dimension: usize,
         dataset_size: usize,
-        dist_f: DistL2,
+        dist_f: DistCosine,
     ) -> OperationResult<Self> {
         create_dir_all(path)?;
         let config_path = HnswGraphConfig::get_config_path(path);
@@ -69,7 +69,7 @@ impl<'b> HNSWIndex<'b> {
         let nb_elem = config.dataset_size;
         let nb_layer = 16.min((nb_elem as f32).ln().trunc() as usize);
         let ef_c = config.ef_construct;
-        let hnsw = Hnsw::<f32, DistL2>::new(
+        let hnsw = Hnsw::<f32, DistCosine>::new(
             config.max_nb_connection,
             config.m,
             config.max_layer,
@@ -183,14 +183,14 @@ mod test {
         let dim = 3;
 
         let coloumn_name = "test";
-        use hnsw_rs::dist::DistL2;
+        use hnsw_rs::dist::DistCosine;
 
         // Assuming `dim` is the dimension of your vectors and `path` is a valid path
         let vector_storage = Arc::new(AtomicRefCell::new(VectorStorageEnum::DenseSimple(
             SimpleDenseVectorStorage::new(dim, Distance::Euclidean, "test"),
         )));
         let path = Path::new("test");
-        let mut hnsw_index = HNSWIndex::new(vector_storage, path, dim, 10, DistL2).unwrap();
+        let mut hnsw_index = HNSWIndex::new(vector_storage, path, dim, 10, DistCosine).unwrap();
         hnsw_index.build_graph(false).unwrap();
         hnsw_index.save_config().unwrap();
 
