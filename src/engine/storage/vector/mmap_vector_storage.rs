@@ -20,7 +20,7 @@ use crate::engine::storage::vector::base::{DenseVectorStorage, VectorStorage, Ve
 use crate::engine::storage::vector::mmap_vector::MmapVectors;
 use crate::engine::types::cow_vector::CowVector;
 use crate::engine::types::distance::Distance;
-use crate::engine::types::types::{DenseVector, PointOffsetType, VectorElementType};
+use crate::engine::types::types::{DenseVector, Payload, PointOffsetType, VectorElementType};
 use crate::engine::types::vector::VectorRef;
 
 const VECTORS_PATH: &str = "matrix.dat";
@@ -111,7 +111,12 @@ impl VectorStorage for MemmapVectorStorage {
         self.get_dense(key).into()
     }
 
-    fn insert_vector(&mut self, _key: PointOffsetType, _vector: VectorRef) -> OperationResult<()> {
+    fn insert_vector(
+        &mut self,
+        _key: PointOffsetType,
+        _vector: VectorRef,
+        _payload: Payload,
+    ) -> OperationResult<()> {
         panic!("Can't directly update vector in mmap storage")
     }
 
@@ -196,6 +201,10 @@ impl VectorStorage for MemmapVectorStorage {
     fn deleted_vector_bitslice(&self) -> &BitSlice {
         self.mmap_store.as_ref().unwrap().deleted_vector_bitslice()
     }
+
+    fn get_payload(&self, key: PointOffsetType) -> OperationResult<Payload> {
+        todo!()
+    }
 }
 
 /// Open a file shortly for appending
@@ -220,6 +229,7 @@ mod tests {
         open_memmap_vector_storage, DELETED_PATH, VECTORS_PATH,
     };
     use crate::engine::types::distance::Distance;
+    use crate::engine::types::types::Payload;
 
     #[test]
     fn test_basic_persistence() {
@@ -232,7 +242,7 @@ mod tests {
             vec![1.0, 1.0, 0.0, 1.0],
             vec![1.0, 0.0, 0.0, 0.0],
         ];
-
+        let payload = Payload::default();
         let storage = open_memmap_vector_storage(dir.path(), 4, Distance::DotProduct).unwrap();
         let mut borrowed_storage = storage.borrow_mut();
         let files = borrowed_storage.files();
@@ -253,13 +263,15 @@ mod tests {
             {
                 let mut borrowed_storage2 = storage2.borrow_mut();
                 borrowed_storage2
-                    .insert_vector(0, points[0].as_slice().into())
+                    .insert_vector(0, points[0].as_slice().into(), payload)
                     .unwrap();
+                let payload = Payload::default();
                 borrowed_storage2
-                    .insert_vector(1, points[1].as_slice().into())
+                    .insert_vector(1, points[1].as_slice().into(), payload)
                     .unwrap();
+                let payload = Payload::default();
                 borrowed_storage2
-                    .insert_vector(2, points[2].as_slice().into())
+                    .insert_vector(2, points[2].as_slice().into(), payload)
                     .unwrap();
             }
             borrowed_storage

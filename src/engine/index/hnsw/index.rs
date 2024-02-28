@@ -11,12 +11,16 @@ use hnsw_rs::{
     dist::{DistL2, Distance},
     hnsw::{Hnsw, Neighbour},
 };
+use serde_json::{Map, Value};
 
 use crate::{
     actix::handlers::vector,
     engine::{
         storage::vector::base::VectorStorage,
-        types::{types::VectorElementType, vector::VectorRef},
+        types::{
+            types::{Payload, VectorElementType},
+            vector::VectorRef,
+        },
     },
 };
 use crate::{
@@ -46,12 +50,12 @@ impl<'b> HNSWIndex<'b> {
             HnswGraphConfig::load(&config_path)?
         } else {
             HnswGraphConfig::new(
-                24,
+                1000,
                 400,
                 24,
-                0,
+                15,
                 false,
-                10,
+                16,
                 data_dimension,
                 false,
                 false,
@@ -65,7 +69,6 @@ impl<'b> HNSWIndex<'b> {
         let nb_elem = config.dataset_size;
         let nb_layer = 16.min((nb_elem as f32).ln().trunc() as usize);
         let ef_c = config.ef_construct;
-
         let hnsw = Hnsw::<f32, DistL2>::new(
             config.max_nb_connection,
             config.m,
@@ -119,7 +122,7 @@ impl<'b> HNSWIndex<'b> {
         Ok(())
     }
 
-    pub fn add(&mut self, vector: &[VectorElementType]) -> OperationResult<()> {
+    pub fn add(&mut self, vector: &[VectorElementType], payload: Payload) -> OperationResult<()> {
         log::info!("Adding vector to hnsw index");
         let key = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
@@ -129,7 +132,7 @@ impl<'b> HNSWIndex<'b> {
         match self
             .vector_storage
             .borrow_mut()
-            .insert_vector(key as u32, vector_ref)
+            .insert_vector(key as u32, vector_ref, payload)
         {
             Ok(_) => {}
             Err(e) => {
@@ -141,10 +144,31 @@ impl<'b> HNSWIndex<'b> {
         Ok(())
     }
 
-    pub fn search(&self, query: &[f32], k: usize) -> OperationResult<Vec<usize>> {
+    pub fn search(&self, query: &[f32], k: usize) -> OperationResult<Vec<Map<String, Value>>> {
         let neighbours: Vec<Neighbour> = self.hnsw.search(&query, k, self.config.ef_construct);
-        let result: Vec<usize> = neighbours.iter().map(|x| x.d_id).collect();
-        Ok(result)
+
+        let payloads = neighbours
+            .iter()
+            .map(|x| {
+                let payload = self
+                    .vector_storage
+                    .borrow()
+                    .get_payload(x.d_id as u32)
+                    .unwrap();
+                let mut map = Map::new();
+                map.insert(
+                    "id".to_string(),
+                    Value::Number(serde_json::Number::from(x.d_id as u32)),
+                );
+                map.insert("payload".to_string(), Value::Object(payload.0));
+                map.insert(
+                    "distance".to_string(),
+                    Value::Number(serde_json::Number::from_f64(x.distance as f64).unwrap()),
+                );
+                map
+            })
+            .collect::<Vec<Map<String, Value>>>();
+        Ok(payloads)
     }
 }
 

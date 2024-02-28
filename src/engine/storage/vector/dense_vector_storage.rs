@@ -13,6 +13,7 @@ use rocksdb::DB;
 use serde::{Deserialize, Serialize};
 
 use crate::common::operation_error::{check_process_stopped, OperationError, OperationResult};
+use crate::engine::storage::payload_storage::PayloadStorage;
 use crate::engine::storage::rocksdb::rocksdb_wrapper::DatabaseColumnWrapper;
 use crate::engine::storage::rocksdb::storage_manager::StorageManager;
 use crate::engine::storage::rocksdb::Flusher;
@@ -21,7 +22,7 @@ use crate::engine::storage::vector::bitvec::bitvec_set_deleted;
 use crate::engine::storage::vector::chunked_vectors::ChunkedVectors;
 use crate::engine::types::cow_vector::CowVector;
 use crate::engine::types::distance::Distance;
-use crate::engine::types::types::{PointOffsetType, VectorElementType};
+use crate::engine::types::types::{Payload, PointOffsetType, VectorElementType};
 use crate::engine::types::vector::VectorRef;
 
 /// In-memory vector storage with on-update persistence using `store`
@@ -30,6 +31,7 @@ pub struct SimpleDenseVectorStorage {
     distance: Distance,
     vectors: ChunkedVectors<VectorElementType>,
     db_wrapper: DatabaseColumnWrapper,
+    payload_storage: PayloadStorage,
     update_buffer: StoredRecord,
     /// BitVec for deleted flags. Grows dynamically upto last set flag.
     deleted: BitVec,
@@ -85,6 +87,7 @@ pub fn open_simple_vector_storage(
                 vector: vec![0.; dim],
             },
             deleted,
+            payload_storage: PayloadStorage::default(),
             deleted_count,
         }),
     )))
@@ -93,11 +96,9 @@ pub fn open_simple_vector_storage(
 impl SimpleDenseVectorStorage {
     pub fn new(dim: usize, distance: Distance, coloumn_name: &str) -> SimpleDenseVectorStorage {
         let vectors = ChunkedVectors::new(dim);
-        let db = StorageManager::open_db_with_existing_cf(&std::path::Path::new(coloumn_name)).unwrap();
-        let db_wrapper = DatabaseColumnWrapper::new(
-            db,
-            coloumn_name,
-        );
+        let db =
+            StorageManager::open_db_with_existing_cf(&std::path::Path::new(coloumn_name)).unwrap();
+        let db_wrapper = DatabaseColumnWrapper::new(db, coloumn_name);
         db_wrapper.create_column_family_if_not_exists().unwrap();
         SimpleDenseVectorStorage {
             dim,
@@ -109,6 +110,7 @@ impl SimpleDenseVectorStorage {
                 vector: vec![0.; dim],
             },
             deleted: BitVec::new(),
+            payload_storage: PayloadStorage::default(),
             deleted_count: 0,
         }
     }
@@ -184,12 +186,22 @@ impl VectorStorage for SimpleDenseVectorStorage {
         self.get_dense(key).into()
     }
 
-    fn insert_vector(&mut self, key: PointOffsetType, vector: VectorRef) -> OperationResult<()> {
+    fn insert_vector(
+        &mut self,
+        key: PointOffsetType,
+        vector: VectorRef,
+        payload: Payload,
+    ) -> OperationResult<()> {
         let vector = vector.try_into()?;
         self.vectors.insert(key, vector)?;
         self.set_deleted(key, false);
         self.update_stored(key, false, Some(vector))?;
+        self.payload_storage.assign(key, &payload)?;
         Ok(())
+    }
+
+    fn get_payload(&self, key: PointOffsetType) -> OperationResult<Payload> {
+        self.payload_storage.payload(key)
     }
 
     fn update_from(

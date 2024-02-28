@@ -11,7 +11,7 @@ use crate::engine::storage::vector::dense_vector_storage::SimpleDenseVectorStora
 use crate::engine::storage::vector::mmap_vector_storage::MemmapVectorStorage;
 use crate::engine::types::cow_vector::CowVector;
 use crate::engine::types::distance::Distance;
-use crate::engine::types::types::{PointOffsetType, VectorElementType};
+use crate::engine::types::types::{Payload, PointOffsetType, VectorElementType};
 use crate::engine::types::vector::VectorRef;
 
 pub trait VectorStorage {
@@ -47,7 +47,14 @@ pub trait VectorStorage {
         Some(self.get_vector(key))
     }
 
-    fn insert_vector(&mut self, key: PointOffsetType, vector: VectorRef) -> OperationResult<()>;
+    fn insert_vector(
+        &mut self,
+        key: PointOffsetType,
+        vector: VectorRef,
+        payload: Payload,
+    ) -> OperationResult<()>;
+
+    fn get_payload(&self, key: PointOffsetType) -> OperationResult<Payload>;
 
     fn update_from(
         &mut self,
@@ -144,10 +151,15 @@ impl VectorStorage for VectorStorageEnum {
         }
     }
 
-    fn insert_vector(&mut self, key: PointOffsetType, vector: VectorRef) -> OperationResult<()> {
+    fn insert_vector(
+        &mut self,
+        key: PointOffsetType,
+        vector: VectorRef,
+        payload: Payload,
+    ) -> OperationResult<()> {
         match self {
-            VectorStorageEnum::DenseSimple(v) => v.insert_vector(key, vector),
-            VectorStorageEnum::Memmap(v) => v.insert_vector(key, vector),
+            VectorStorageEnum::DenseSimple(v) => v.insert_vector(key, vector, payload),
+            VectorStorageEnum::Memmap(v) => v.insert_vector(key, vector, payload),
         }
     }
 
@@ -202,6 +214,13 @@ impl VectorStorage for VectorStorageEnum {
         match self {
             VectorStorageEnum::DenseSimple(v) => v.deleted_vector_bitslice(),
             VectorStorageEnum::Memmap(v) => v.deleted_vector_bitslice(),
+        }
+    }
+
+    fn get_payload(&self, key: PointOffsetType) -> OperationResult<Payload> {
+        match self {
+            VectorStorageEnum::DenseSimple(v) => v.get_payload(key),
+            VectorStorageEnum::Memmap(v) => v.get_payload(key),
         }
     }
 }

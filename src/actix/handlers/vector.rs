@@ -33,8 +33,8 @@ pub async fn add_vector<'a>(
     operation: Json<AddVector>,
 ) -> impl Responder {
     let vector: &[VectorElementType] = operation.vectors.as_slice();
-
-    match data.lock().unwrap().add(vector) {
+    let payload = operation.payload.clone();
+    match data.lock().unwrap().add(vector, payload) {
         Ok(()) => "Vector added successfully",
         Err(e) => {
             log::error!("Error adding vector: {}", e);
