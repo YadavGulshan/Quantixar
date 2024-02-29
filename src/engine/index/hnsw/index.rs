@@ -137,7 +137,9 @@ impl<'b> HNSWIndex<'b> {
             .borrow_mut()
             .insert_vector(key as u32, vector_ref, payload)
         {
-            Ok(_) => {}
+            Ok(_) => {
+                let _ = self.vector_storage.borrow_mut().flusher();
+            }
             Err(e) => {
                 return Err(e);
             }

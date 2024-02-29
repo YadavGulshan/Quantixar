@@ -76,6 +76,7 @@ pub fn open_simple_vector_storage(
         vectors.len() * dim * size_of::<VectorElementType>() / 1024 / 1024
     );
 
+
     Ok(Arc::new(AtomicRefCell::new(
         VectorStorageEnum::DenseSimple(SimpleDenseVectorStorage {
             dim,

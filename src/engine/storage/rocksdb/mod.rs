@@ -8,7 +8,7 @@ pub mod storage_manager;
 pub mod storage_mgr_opts;
 
 
-pub type Flusher = Box<dyn FnOnce() -> OperationResult<()> + Send>;
+pub type Flusher = Box<dyn FnOnce() -> OperationResult<()> + Send + Sync>;
 
 const DB_CACHE_SIZE: usize = 10 * 1024 * 1024;
 // 10 mb
