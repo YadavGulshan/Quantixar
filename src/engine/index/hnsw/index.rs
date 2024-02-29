@@ -136,13 +136,16 @@ impl<'b> HNSWIndex<'b> {
 
         match vector_storage.insert_vector(key as PointOffsetType, vector_ref, payload) {
             Ok(_) => {
-                let _ = vector_storage.flusher();
+                let flush = vector_storage.flusher();
+                let result = flush();
+                if result.is_err() {
+                    return Err(result.err().unwrap());
+                }
             }
             Err(e) => {
                 return Err(e);
             }
         };
-
 
         let data_with_id: (&[VectorElementType], usize) = (vector, key);
         self.hnsw.insert_slice(data_with_id);

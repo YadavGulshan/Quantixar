@@ -70,12 +70,11 @@ pub fn open_simple_vector_storage(
         vectors.insert(point_id, &stored_record.vector)?;
     }
 
-    debug!("Segment vectors: {}", vectors.len());
-    debug!(
+    dbg!("Segment vectors: {}", vectors.len());
+    dbg!(
         "Estimated segment size {} MB",
         vectors.len() * dim * size_of::<VectorElementType>() / 1024 / 1024
     );
-
 
     Ok(Arc::new(AtomicRefCell::new(
         VectorStorageEnum::DenseSimple(SimpleDenseVectorStorage {
