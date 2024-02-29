@@ -25,9 +25,9 @@ struct Buffer {
   pub meta: Option<BufferMeta>,
 }
 
-pub(crate) struct BufferStore {
+pub struct BufferStore {
   /// Stores the buffer for the point vectors
-  pub buffers: Vec<Buffer>,
+  buffers: Vec<Buffer>,
 }
 
 impl BufferStore {

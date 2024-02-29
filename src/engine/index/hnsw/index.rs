@@ -18,7 +18,7 @@ use crate::{
     engine::{
         storage::vector::base::VectorStorage,
         types::{
-            types::{Payload, VectorElementType},
+            types::{Payload, PointOffsetType, VectorElementType},
             vector::VectorRef,
         },
     },
@@ -132,18 +132,18 @@ impl<'b> HNSWIndex<'b> {
             .unwrap()
             .as_nanos() as usize;
         let vector_ref = VectorRef::Dense(vector);
-        match self
-            .vector_storage
-            .borrow_mut()
-            .insert_vector(key as u32, vector_ref, payload)
-        {
+        let mut vector_storage = self.vector_storage.borrow_mut();
+
+        match vector_storage.insert_vector(key as PointOffsetType, vector_ref, payload) {
             Ok(_) => {
-                let _ = self.vector_storage.borrow_mut().flusher();
+                let _ = vector_storage.flusher();
             }
             Err(e) => {
                 return Err(e);
             }
         };
+
+
         let data_with_id: (&[VectorElementType], usize) = (vector, key);
         self.hnsw.insert_slice(data_with_id);
         Ok(())
