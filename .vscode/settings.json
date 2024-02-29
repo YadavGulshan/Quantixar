@@ -1,4 +1,8 @@
 {
-  "rust-analyzer.cargo.features": ["default"],
-  "cSpell.words": ["actix", "Quantixar"]
+    "rust-analyzer.linkedProjects": [
+        "./lib/hnswlib-rs/Cargo.toml",
+        "./Cargo.toml",
+        "./Cargo.toml",
+        "./Cargo.toml"
+    ]
 }

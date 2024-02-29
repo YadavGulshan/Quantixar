@@ -1,4 +1,6 @@
-workspace = { members = ["lib/common"] }
+[workspace]
+members = ["lib/common/io", "lib/common/memory"]
+
 [package]
 name = "quantixar"
 version = "0.1.0"
@@ -9,13 +11,15 @@ edition = "2021"
 [features]
 default = ["rock"]
 rock = ["rocksdb"]
-etcdb = ["etcd"]
+# etcdb = ["etcd"]
 
 [dependencies]
-etcd = { version = "0.9.0", optional = true }
-faiss = { version = "0.12.1" }
-rocksdb = { version = "0.21.0", default-features = false, features = [
-  "snappy",
+# Workspace members
+io = { path = "lib/common/io" }
+memory = { path = "lib/common/memory" }
+hnsw_rs = { path = "lib/hnswlib-rs" }
+rocksdb = { version = "0.22.0", default-features = false, features = [
+    "snappy",
 ], optional = true }
 atomic_refcell = "0.1.13"
 atomicwrites = "0.4.2"
@@ -25,42 +29,53 @@ sysinfo = "0.29.11"
 thiserror = "1.0.56"
 log = { version = "0.4.20", features = [] }
 lazy_static = "1.4.0"
-parking_lot = { version = "0.12.1", features = ["serde"] }
+
 rayon = "1.8.1"
 serde_json = "1.0.113"
 fs_extra = "1.3.0"
 tokio = { version = "1.36.0", features = [
-  "rt-multi-thread",
-  "tracing",
-  "full",
+    "rt-multi-thread",
+    "tracing",
+    "full",
 ] }
 tracing = { version = "0.1" }
 
+validator = { version = "0.16", features = ["derive"] }
+config = "0.14.0"
 serde_cbor = "0.11.2"
 serde = { version = "1.0.196", features = ["derive"] }
 schemars = { version = "0.8.16", features = [
-  "uuid1",
-  "preserve_order",
-  "chrono",
+    "uuid1",
+    "preserve_order",
+    "chrono",
 ] }
 chrono = { version = "0.4.31", features = ["serde"] }
 uuid = { version = "1.6.1", features = ["v4", "serde"] }
 serde-value = "0.7"
 tar = "0.4.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
-tonic = "0.11.0"
-hnsw_rs = "0.2.0"
-axum = { version = "0.7.4", features = ["multipart"] }
-hyper = { version = "1.0.1", features = ["full"] }
-tower-http = { version = "0.5.1", features = ["cors", "limit"] }
 
 
-
-utoipa = { version = "4.2.0", features = ["axum_extras"] }
-utoipa-swagger-ui = { version = "6.0.0", features = ["axum"] }
-utoipa-redoc = { version = "3.0.0", features = ["axum"] }
-utoipa-rapidoc = { version = "3.0.0", features = ["axum"] }
-tower = { version = "0.4.13", features = ["timeout", "limit", "load-shed"] }
+utoipa = { version = "4.2.0", features = ["actix_extras"] }
+utoipa-swagger-ui = { version = "6.0.0", features = ["actix-web"] }
+utoipa-redoc = { version = "3.0.0", features = ["actix-web"] }
+utoipa-rapidoc = { version = "3.0.0", features = ["actix-web"] }
+clap = { version = "4.5.1", features = ["derive"] }
+actix-web = "4.5.1"
+actix-cors = "0.7.0"
+actix-multipart = "0.6.1"
+# futures = "0.3.30"
+hyper = { version = "1.1.0", features = ["client"] }
+ordered-float = "4.2.0"
+tinyvec = { version = "1.6.0", features = ["serde", "std"] }
+num-traits = "0.2.18"
+bitvec = "1.0.1"
+rand = "0.8.5"
+tempfile = "3.10.0"
+bincode = "1.3.3"
+parking_lot = "0.12.1"
+hdf5 = "0.8.1"
+actix-web-validator = "5.0.1"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 cgroups-rs = "0.3"
@@ -69,3 +84,6 @@ io-uring = "0.6.2"
 
 [profile.dev]
 incremental = true
+
+[dev-dependencies]
+tempdir = "0.3.7"
