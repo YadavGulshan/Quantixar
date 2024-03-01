@@ -50,7 +50,7 @@ schemars = { version = "0.8.16", features = [
     "chrono",
 ] }
 chrono = { version = "0.4.31", features = ["serde"] }
-uuid = { version = "1.6.1", features = ["v4", "serde"] }
+uuid = { version = "1.6", features = ["v4", "serde"] }
 serde-value = "0.7"
 tar = "0.4.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }

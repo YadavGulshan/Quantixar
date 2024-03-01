@@ -3,13 +3,17 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use actix_web::{get, post, web::Data, HttpResponse, Responder};
+use actix_web::{
+    get, post,
+    web::{self, Data},
+    HttpResponse, Responder,
+};
 use actix_web_validator::Json;
 use hnsw_rs::hnsw::Distance;
 use serde_json::json;
 
 use crate::{
-    actix::model::vector::{AddVector, SearchVector},
+    actix::model::vector::{InsertOperation, SearchVector},
     engine::{
         index::hnsw::index::HNSWIndex,
         types::{types::VectorElementType, vector::VectorRef},
@@ -21,7 +25,7 @@ use crate::{
     path = "/vector",
     request_body(
         content_type = "application/json",
-        content = AddVector,
+        content = InsertOperation,
     ),
     responses(
         (status = 200, description = "Add Vectors in HSNW",)
@@ -30,11 +34,10 @@ use crate::{
 #[post("/vector")]
 pub async fn add_vector<'a>(
     data: Data<Arc<Mutex<HNSWIndex<'a>>>>,
-    operation: Json<AddVector>,
+    operation: web::Json<InsertOperation>,
 ) -> impl Responder {
-    let vector: &[VectorElementType] = operation.vectors.as_slice();
-    let payload = operation.payload.clone();
-    match data.lock().unwrap().add(vector, payload) {
+    let points = operation.points.clone();
+    match data.lock().unwrap().batch_add(points) {
         Ok(()) => "Vector added successfully",
         Err(e) => {
             log::error!("Error adding vector: {}", e);

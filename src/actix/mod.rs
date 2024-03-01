@@ -1,5 +1,5 @@
 pub mod handlers;
-mod model;
+pub mod model;
 pub mod routes;
 pub mod table;
 use std::{
@@ -9,10 +9,11 @@ use std::{
 };
 
 use actix_cors::Cors;
+use actix_multipart::form::Limits;
 use actix_web::{
-    get,
+    error, get,
     middleware::{Compress, Logger},
-    web::Data,
+    web::{self, Data, PayloadConfig},
     App, HttpResponse, HttpServer, Responder,
 };
 use atomic_refcell::AtomicRefCell;
@@ -57,16 +58,30 @@ pub async fn init(settings: Settings) -> Result<(), Error> {
     let data_dimension = 512;
     let dataset_size = 10;
     let dist_f = hnsw_rs::dist::DistCosine;
-    let engine = match HNSWIndex::new(vector_storage, index_dir_path, data_dimension, dataset_size, dist_f) {
-        Ok(mut engine) => {
-            match engine.build_graph(true) {
-                Ok(_) => Arc::new(Mutex::new(engine)),
-                Err(e) => panic!("Error building HNSWIndex: {}", e),
-            }
+    let engine = match HNSWIndex::new(
+        vector_storage,
+        index_dir_path,
+        data_dimension,
+        dataset_size,
+        dist_f,
+    ) {
+        Ok(mut engine) => match engine.build_graph(true) {
+            Ok(_) => Arc::new(Mutex::new(engine)),
+            Err(e) => panic!("Error building HNSWIndex: {}", e),
         },
         Err(e) => panic!("Error creating HNSWIndex: {}", e),
     };
+    // custom `Json` extractor configuration
     let server = HttpServer::new(move || {
+        let json_cfg = web::JsonConfig::default()
+            // limit request payload size
+            .limit(1000000 * 25)
+            // only accept text/plain content type
+            // .content_type(|mime| mime == mime::TEXT_PLAIN)
+            // use custom error handler
+            .error_handler(|err, req| {
+                error::InternalError::from_response(err, HttpResponse::Conflict().into()).into()
+            });
         let cors = Cors::default()
             .allow_any_header()
             .allow_any_method()

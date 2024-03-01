@@ -7,14 +7,16 @@ use std::{
 
 use atomic_refcell::AtomicRefCell;
 
+use clap::Id;
 use hnsw_rs::{
     dist::{DistCosine, DistL2, Distance},
     hnsw::{self, Hnsw, Neighbour},
 };
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde_json::{Map, Value};
 
 use crate::{
-    actix::handlers::vector,
+    actix::{handlers::vector, model::vector::AddVector},
     engine::{
         storage::vector::base::VectorStorage,
         types::{
@@ -126,7 +128,6 @@ impl<'b> HNSWIndex<'b> {
     }
 
     pub fn add(&mut self, vector: &[VectorElementType], payload: Payload) -> OperationResult<()> {
-        log::info!("Adding vector to hnsw index");
         let key = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap()
@@ -149,6 +150,38 @@ impl<'b> HNSWIndex<'b> {
 
         let data_with_id: (&[VectorElementType], usize) = (vector, key);
         self.hnsw.insert_slice(data_with_id);
+        Ok(())
+    }
+
+    pub fn batch_add(&mut self, vectors: Vec<AddVector>) -> OperationResult<()> {
+        let mut vector_storage = self.vector_storage.borrow_mut();
+        let mut data = Vec::new();
+        for vector in vectors {
+            let key: usize = match vector.id {
+                crate::actix::model::vector::ExtendedPointId::NumId(id) => id as usize,
+                crate::actix::model::vector::ExtendedPointId::Uuid(id) => id.as_u128() as usize,
+            };
+            let vector_ref = VectorRef::Dense(vector.vectors.as_slice());
+            match vector_storage.insert_vector(key as PointOffsetType, vector_ref, vector.payload) {
+                Ok(_) => {
+                    let flush = vector_storage.flusher();
+                    let result = flush();
+                    if result.is_err() {
+                        return Err(result.err().unwrap());
+                    }
+                }
+                Err(e) => {
+                    return Err(e);
+                }
+            };
+
+            data.push((vector.vectors.clone(), key));
+        }
+        let datas_with_id = data
+            .par_iter()
+            .map(|x| (x.0.as_slice(), x.1))
+            .collect::<Vec<(&[VectorElementType], usize)>>();
+        self.hnsw.parallel_insert_slice(&datas_with_id);
         Ok(())
     }
 
