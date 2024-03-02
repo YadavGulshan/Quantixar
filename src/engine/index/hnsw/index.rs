@@ -18,7 +18,7 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde_json::{Map, Value};
 
 use crate::{
-    actix::handlers::vector,
+    actix::{handlers::vector, model::vector::AddVector},
     common::operation_error::OperationError,
     engine::{
         storage::vector::base::VectorStorage,
