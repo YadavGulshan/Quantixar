@@ -1,10 +1,9 @@
 use std::mem::size_of;
 use std::ops::Range;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 
-use actix_web::dev::Path;
 use atomic_refcell::AtomicRefCell;
 use bitvec::prelude::{BitSlice, BitVec};
 use log::debug;
@@ -110,7 +109,7 @@ impl SimpleDenseVectorStorage {
                 vector: vec![0.; dim],
             },
             deleted: BitVec::new(),
-            payload_storage: PayloadStorage::default(),
+            payload_storage: Self::load_payloads().unwrap(),
             deleted_count: 0,
         }
     }
@@ -155,6 +154,24 @@ impl SimpleDenseVectorStorage {
             bincode::serialize(&record).unwrap(),
         )?;
 
+        Ok(())
+    }
+
+    fn load_payloads() -> OperationResult<PayloadStorage> {
+        let file_name = "payload_dump.bin";
+        if !Path::new(file_name).exists() {
+            return Ok(PayloadStorage::default());
+        }
+        PayloadStorage::load_from_file(file_name).map_err(|e| {
+            OperationError::service_error(format!(
+                "Cannot load payload storage from file: {}",
+                e.to_string()
+            ))
+        })
+    }
+
+    fn save_payloads(&self) -> OperationResult<()> {
+        self.payload_storage.dump_to_file("payload_dump.bin")?;
         Ok(())
     }
 }

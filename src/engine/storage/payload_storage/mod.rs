@@ -1,5 +1,10 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::{Read, Write},
+};
 
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::{
@@ -7,7 +12,7 @@ use crate::{
     engine::types::types::{Payload, PointOffsetType},
 };
 
-#[derive(Default)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct PayloadStorage {
     pub(crate) payload: HashMap<PointOffsetType, Payload>,
 }
@@ -52,5 +57,20 @@ impl PayloadStorage {
     pub fn wipe(&mut self) -> OperationResult<()> {
         self.payload = HashMap::new();
         Ok(())
+    }
+    // To dump the struct into a binary file:
+    pub fn dump_to_file(&self, file: &str) -> OperationResult<()> {
+        let encoded: Vec<u8> = bincode::serialize(&self).unwrap();
+        let mut file = File::create(file)?;
+        file.write_all(&encoded)?;
+        Ok(())
+    }
+    // To load the struct from a binary file:
+    pub fn load_from_file(filename: &str) -> std::io::Result<PayloadStorage> {
+        let mut file = File::open(filename).unwrap();
+        let mut encoded: Vec<u8> = Vec::new();
+        file.read_to_end(&mut encoded)?;
+        let storage: PayloadStorage = bincode::deserialize(&encoded).unwrap();
+        Ok(storage)
     }
 }

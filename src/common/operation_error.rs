@@ -1,5 +1,9 @@
 use std::{
-    backtrace::Backtrace, collections::TryReserveError, fmt::Display, io::{Error as IoError, ErrorKind}, sync::atomic::{AtomicBool, Ordering}
+    backtrace::Backtrace,
+    collections::TryReserveError,
+    fmt::Display,
+    io::{Error as IoError, ErrorKind},
+    sync::atomic::{AtomicBool, Ordering},
 };
 
 use actix_web::{http::StatusCode, HttpResponse, ResponseError};
@@ -11,8 +15,11 @@ use thiserror::Error;
 
 use crate::{
     common::{
-        mmap_type::Error as MmapError, point_id::PointIdType, types::{PayloadKeyType, SeqNumberType}
-    }, utils::mem::Mem
+        mmap_type::Error as MmapError,
+        point_id::PointIdType,
+        types::{PayloadKeyType, SeqNumberType},
+    },
+    utils::mem::Mem,
 };
 
 pub const PROCESS_CANCELLED_BY_SERVICE_MESSAGE: &str = "process cancelled by service";
@@ -55,6 +62,9 @@ pub enum OperationError {
     ValidationError { description: String },
     #[error("Wrong usage of sparse vectors")]
     WrongSparse,
+    // faild to dump graph
+    #[error("Internal error")]
+    InternalError,
 }
 
 impl OperationError {
@@ -183,6 +193,7 @@ impl ResponseError for OperationError {
             OperationError::Cancelled { .. } => StatusCode::SERVICE_UNAVAILABLE,
             OperationError::ValidationError { .. } => StatusCode::BAD_REQUEST,
             OperationError::WrongSparse => StatusCode::BAD_REQUEST,
+            OperationError::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
     fn error_response(&self) -> HttpResponse {

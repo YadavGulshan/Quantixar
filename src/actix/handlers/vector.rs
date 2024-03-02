@@ -74,3 +74,19 @@ pub async fn search_vector<'a>(
         }
     }
 }
+
+#[post("/vector/dump")]
+pub async fn dump_vector<'a>(data: Data<Arc<Mutex<HNSWIndex<'a>>>>) -> impl Responder {
+    match data.lock().unwrap().dump() {
+        Ok(result) => {
+            let response = json!({
+                "result": result,
+            });
+            HttpResponse::Ok().json(response)
+        }
+        Err(e) => {
+            log::error!("Error searching vector: {}", e);
+            HttpResponse::InternalServerError().finish()
+        }
+    }
+}

@@ -424,11 +424,10 @@ impl HnswIo {
     }
 
     /// reload a previously dumped hnsw stucture
-    pub fn load_hnsw<'b, 'a, T, D>(&'a mut self) -> anyhow::Result<Hnsw<'b, T, D>>
+    pub fn load_hnsw<T, D>(&mut self) -> anyhow::Result<Hnsw<'_, T, D>>
     where
         T: 'static + Serialize + DeserializeOwned + Clone + Sized + Send + Sync + std::fmt::Debug,
         D: Distance<T> + Default + Send + Sync,
-        'a: 'b,
     {
         //
         log::debug!("\n\n HnswIo::load_hnsw ");
@@ -499,18 +498,18 @@ impl HnswIo {
         let layer_point_indexation = self.load_point_indexation(graph_in, &description, data_in)?;
         let data_dim = layer_point_indexation.get_data_dimension();
 
-        let hnsw: Hnsw<T, D> = Hnsw {
-            max_nb_connection: description.max_nb_connection as usize,
-            ef_construction: description.ef,
-            extend_candidates: true,
-            keep_pruned: false,
-            max_layer: description.nb_layer as usize,
-            layer_indexed_points: layer_point_indexation,
-            data_dimension: data_dim,
-            dist_f: D::default(),
-            searching: false,
-            datamap_opt: true, // set datamap_opt to true
-        };
+        // let hnsw: Hnsw<'_, T, D> = Hnsw {
+        //     max_nb_connection: description.max_nb_connection as usize,
+        //     ef_construction: description.ef,
+        //     extend_candidates: true,
+        //     keep_pruned: false,
+        //     max_layer: description.nb_layer as usize,
+        //     layer_indexed_points: layer_point_indexation,
+        //     data_dimension: data_dim,
+        //     dist_f: D::default(),
+        //     searching: false,
+        //     datamap_opt: true, // set datamap_opt to true
+        // };
         //
         log::debug!("load_hnsw completed");
         let elapsed_t = start_t.elapsed().unwrap().as_secs() as f32;
@@ -520,7 +519,18 @@ impl HnswIo {
             println!("reload_hnsw : elapsed system time(s) {}", elapsed_t);
         }
         //
-        Ok(hnsw)
+        Ok(Hnsw {
+            max_nb_connection: description.max_nb_connection as usize,
+            ef_construction: description.ef,
+            extend_candidates: true,
+            keep_pruned: false,
+            max_layer: description.nb_layer as usize,
+            layer_indexed_points: layer_point_indexation.clone(),
+            data_dimension: data_dim,
+            dist_f: D::default(),
+            searching: false,
+            datamap_opt: true, // set datamap_opt to true
+        })
     } // end of load_hnsw
 
     /// reload a previously dumped hnsw structure
@@ -1581,8 +1591,8 @@ mod tests {
         // test equality
         check_graph_equality(&hnsw_loaded, &hnsw);
         //
-        // let _ = std::fs::remove_file("dumpreloadtestgraph.hnsw.data");
-        // let _ = std::fs::remove_file("dumpreloadtestgraph.hnsw.graph");
+        let _ = std::fs::remove_file("dumpreloadtestgraph.hnsw.data");
+        let _ = std::fs::remove_file("dumpreloadtestgraph.hnsw.graph");
     } // end of test_dump_reload
 
     // this tests reloads a dump with memory mapping of data, inserts new data and redump

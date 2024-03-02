@@ -9,14 +9,17 @@ use atomic_refcell::AtomicRefCell;
 
 use clap::Id;
 use hnsw_rs::{
+    api::AnnT,
     dist::{DistCosine, DistL2, Distance},
     hnsw::{self, Hnsw, Neighbour},
+    hnswio::HnswIo,
 };
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde_json::{Map, Value};
 
 use crate::{
-    actix::{handlers::vector, model::vector::AddVector},
+    actix::handlers::vector,
+    common::operation_error::OperationError,
     engine::{
         storage::vector::base::VectorStorage,
         types::{
@@ -71,19 +74,27 @@ impl<'b> HNSWIndex<'b> {
         let nb_elem = config.dataset_size;
         let nb_layer = 16.min((nb_elem as f32).ln().trunc() as usize);
         let ef_c = config.ef_construct;
-        let hnsw = Hnsw::<f32, DistCosine>::new(
-            config.max_nb_connection,
-            config.m,
-            config.max_layer,
-            config.ef_construct,
-            dist_f,
-        );
+        let dir = PathBuf::from(".");
+        let file = String::from("dumpreloadgraph");
+        let mut hnsw_io = HnswIo::new(dir, file.clone());
+        let hnsw: Hnsw<f32, DistCosine> = if Path::new(&file).exists() {
+            let hnsw: Hnsw<f32, DistCosine> = hnsw_io.load_hnsw().unwrap();
+            hnsw.clone()
+        } else {
+            Hnsw::<f32, DistCosine>::new(
+                config.max_nb_connection,
+                config.m,
+                config.max_layer,
+                config.ef_construct,
+                dist_f,
+            )
+        };
 
         let hnsw_index = HNSWIndex {
             vector_storage,
             config,
-            path: path.to_owned(),
-            hnsw,
+            path: path.to_path_buf(),
+            hnsw: hnsw.clone(),
         };
 
         Ok(hnsw_index)
@@ -210,6 +221,18 @@ impl<'b> HNSWIndex<'b> {
             })
             .collect::<Vec<Map<String, Value>>>();
         Ok(payloads)
+    }
+
+    pub fn dump(&self) -> OperationResult<()> {
+        self.hnsw.dump_layer_info();
+        let filename = String::from("dumpreloadgraph");
+        match self.hnsw.file_dump(&filename) {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                log::error!("Error dumping graph: {}", e);
+                Err(OperationError::InternalError)
+            }
+        }
     }
 }
 
