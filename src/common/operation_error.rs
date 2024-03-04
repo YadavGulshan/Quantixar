@@ -1,3 +1,6 @@
+use std::convert::Infallible;
+use std::convert::Infallible;
+use std::convert::Infallible;
 use std::{
     backtrace::Backtrace,
     collections::TryReserveError,
@@ -7,9 +10,10 @@ use std::{
 };
 
 use actix_web::{http::StatusCode, HttpResponse, ResponseError};
+use arrow_schema::ArrowError;
 use atomicwrites::Error as AtomicIoError;
-use hdf5::Error;
 use io::file_operations::FileStorageError;
+use parquet::errors::ParquetError;
 use rayon::ThreadPoolBuildError;
 use thiserror::Error;
 
@@ -165,15 +169,6 @@ impl From<TryReserveError> for OperationError {
         OperationError::OutOfMemory {
             description: format!("Failed to reserve memory: {err}"),
             free: free_memory,
-        }
-    }
-}
-
-impl From<hdf5::Error> for OperationError {
-    fn from(value: Error) -> Self {
-        OperationError::ServiceError {
-            description: format!("HDF5 error: {value}"),
-            backtrace: Some(Backtrace::force_capture().to_string()),
         }
     }
 }
