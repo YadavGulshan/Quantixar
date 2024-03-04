@@ -12,7 +12,7 @@
 ///
 ///
 /// The L1 and Cosine distance are implemented for u16, i32, i64, f32, f64
-use std::{arch::is_aarch64_feature_detected, os::raw::*};
+use std::{os::raw::*};
 
 // use cfg_if;
 #[cfg(target_feature = "neon")]

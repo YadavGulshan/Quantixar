@@ -1,18 +1,20 @@
 use std::{
-    backtrace::Backtrace, collections::TryReserveError, fmt::Display, io::{Error as IoError, ErrorKind}, sync::atomic::{AtomicBool, Ordering}
+    backtrace::Backtrace, collections::TryReserveError, fmt::Display, io::{Error as IoError, ErrorKind}, sync::atomic::{AtomicBool, Ordering},
 };
+use std::convert::Infallible;
 
 use actix_web::{http::StatusCode, HttpResponse, ResponseError};
+use arrow_schema::ArrowError;
 use atomicwrites::Error as AtomicIoError;
-use hdf5::Error;
+use parquet::errors::ParquetError;
 use io::file_operations::FileStorageError;
 use rayon::ThreadPoolBuildError;
 use thiserror::Error;
 
 use crate::{
     common::{
-        mmap_type::Error as MmapError, point_id::PointIdType, types::{PayloadKeyType, SeqNumberType}
-    }, utils::mem::Mem
+        mmap_type::Error as MmapError, point_id::PointIdType, types::{PayloadKeyType, SeqNumberType},
+    }, utils::mem::Mem,
 };
 
 pub const PROCESS_CANCELLED_BY_SERVICE_MESSAGE: &str = "process cancelled by service";
@@ -159,14 +161,24 @@ impl From<TryReserveError> for OperationError {
     }
 }
 
-impl From<hdf5::Error> for OperationError {
-    fn from(value: Error) -> Self {
-        OperationError::ServiceError {
-            description: format!("HDF5 error: {value}"),
-            backtrace: Some(Backtrace::force_capture().to_string()),
-        }
+impl From<ParquetError> for OperationError {
+    fn from(err: ParquetError) -> Self {
+        OperationError::service_error(format!("Parquet error: {err}"))
     }
 }
+
+impl From<Infallible> for OperationError {
+    fn from(err: Infallible) -> Self {
+        OperationError::service_error(format!("Arrow error: {err}"))
+    }
+}
+
+impl From<ArrowError> for OperationError {
+    fn from(err: ArrowError) -> Self {
+        OperationError::service_error(format!("Arrow error: {err}"))
+    }
+}
+
 
 impl ResponseError for OperationError {
     fn status_code(&self) -> StatusCode {

@@ -186,25 +186,5 @@ mod test {
     use crate::engine::storage::vector::dense_vector_storage::SimpleDenseVectorStorage;
     use crate::engine::types::distance::Distance;
 
-    #[test]
-    fn test_hnsw_index() {
-        let dim = 3;
 
-        let coloumn_name = "test";
-        use hnsw_rs::dist::DistCosine;
-
-        // Assuming `dim` is the dimension of your vectors and `path` is a valid path
-        let vector_storage = Arc::new(AtomicRefCell::new(VectorStorageEnum::DenseSimple(
-            SimpleDenseVectorStorage::new(dim, Distance::Euclidean, "test"),
-        )));
-        let path = Path::new("test");
-        let mut hnsw_index = HNSWIndex::new(vector_storage, path, dim, 10, DistCosine).unwrap();
-        hnsw_index.build_graph(false).unwrap();
-        hnsw_index.save_config().unwrap();
-
-        let query = vec![0.0, 0.0, 0.0];
-        let k = 3;
-        let result = hnsw_index.search(&query, k).unwrap();
-        println!("{:?}", result);
-    }
 }

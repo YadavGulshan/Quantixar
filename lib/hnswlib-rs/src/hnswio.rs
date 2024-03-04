@@ -44,7 +44,7 @@ use rand::Rng;
 use anyhow::*;
 use std::any::type_name;
 
-use crate::{datamap::*, dist::Distance, hnsw};
+use crate::{datamap::*, hnsw};
 use std::io::prelude::*;
 
 // magic before each graph point data for each point

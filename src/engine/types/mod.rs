@@ -4,3 +4,4 @@ pub mod tiny_kv;
 pub mod vector;
 pub mod named_vector;
 pub mod distance;
+mod parquet_schema;
