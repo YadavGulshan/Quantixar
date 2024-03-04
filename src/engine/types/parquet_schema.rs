@@ -1,11 +1,11 @@
+use crate::common::operation_error::{OperationError, OperationResult};
+use arrow_array::{ArrayRef, RecordBatch};
+use arrow_schema::SchemaRef;
+use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::Path;
-use arrow_array::{ArrayRef, RecordBatch};
-use arrow_schema::SchemaRef;
-use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
-use crate::common::operation_error::{OperationError, OperationResult};
 
 #[derive(Clone)]
 pub struct ParquetSchema {
@@ -43,11 +43,13 @@ impl ParquetFile {
     fn init(&mut self) -> OperationResult<()> {
         if self.data.is_none() {
             let data = self.read_parquet()?;
-            self.data = Some(Cow::Owned(data.first()
-                .ok_or_else(|| OperationError::ServiceError {
-                    description: "No data found in parquet file".to_string(),
-                    backtrace: None,
-                })?.clone()
+            self.data = Some(Cow::Owned(
+                data.first()
+                    .ok_or_else(|| OperationError::ServiceError {
+                        description: "No data found in parquet file".to_string(),
+                        backtrace: None,
+                    })?
+                    .clone(),
             ));
         }
         Ok(())
@@ -58,13 +60,28 @@ impl ParquetFile {
             panic!("File not found: {}", self.file_path)
         }
         let file = File::open(path)?;
-        let reader = ParquetRecordBatchReaderBuilder::try_new(file)?
-            .with_batch_size(8192)
-            .build()?;
+        let reader = match ParquetRecordBatchReaderBuilder::try_new(file) {
+            Ok(reader) => reader,
+            Err(_) => {
+                return Err(OperationError::ServiceError {
+                    description: "Failed to create ParquetRecordBatchReader".to_string(),
+                    backtrace: None,
+                })
+            }
+        };
 
         let mut batches = Vec::new();
-        for batch in reader {
-            batches.push(batch?);
+        let mut record_build = reader.build().unwrap();
+        for batch in record_build.by_ref() {
+            match batch {
+                Ok(batch) => batches.push(batch),
+                Err(_) => {
+                    return Err(OperationError::ServiceError {
+                        description: "Failed to read Parquet record batch".to_string(),
+                        backtrace: None,
+                    })
+                }
+            }
         }
         Ok(batches)
     }
@@ -92,29 +109,31 @@ impl ParquetFile {
     pub fn get_col_names(&self) -> Vec<String> {
         let binding = self.get_raw_schema().unwrap();
         let batches = binding.all_fields();
-        let names = batches.iter().map(|x| {
-            x.name().clone()
-        }).collect::<Vec<String>>();
+        let names = batches
+            .iter()
+            .map(|x| x.name().clone())
+            .collect::<Vec<String>>();
         return names;
     }
 
     pub fn get_columns(&self) -> OperationResult<Vec<ArrayRef>> {
-        let cols = self.get_data()?
-            .columns()
-            .to_vec();
+        let cols = self.get_data()?.columns().to_vec();
         Ok(cols)
     }
 
     /// use get_col_names, to get the idx of column, and then pull the data from get_cols
     pub fn target_col(&self) -> OperationResult<ArrayRef> {
-        let target_col_idx = self.get_col_names().iter().position(
-            |x| x == &self.parquet_schema.target_field.name
-        ).ok_or_else(|| {
-            OperationError::ServiceError {
-                description: format!("Target column '{}' not found", self.parquet_schema.target_field.name),
+        let target_col_idx = self
+            .get_col_names()
+            .iter()
+            .position(|x| x == &self.parquet_schema.target_field.name)
+            .ok_or_else(|| OperationError::ServiceError {
+                description: format!(
+                    "Target column '{}' not found",
+                    self.parquet_schema.target_field.name
+                ),
                 backtrace: None,
-            }
-        })?;
+            })?;
 
         let cols = self.get_columns()?;
         Ok(cols[target_col_idx].clone())
@@ -123,10 +142,10 @@ impl ParquetFile {
 
 #[cfg(test)]
 mod tests {
+    use crate::engine::types::parquet_schema::{FieldInfo, ParquetFile, ParquetSchema};
+    use arrow_array::{Array, BinaryArray, Float32Array, Float64Array, Int32Array};
     use std::fmt::Binary;
     use std::sync::Arc;
-    use arrow_array::{Array, BinaryArray, Float32Array, Float64Array, Int32Array};
-    use crate::engine::types::parquet_schema::{FieldInfo, ParquetFile, ParquetSchema};
 
     fn text_to_f32(text: &str) -> Result<f32, std::num::ParseFloatError> {
         text.parse::<f32>()
@@ -151,15 +170,15 @@ mod tests {
         // dbg!(schema);
 
         let binary_data: Arc<dyn Array> = parquet_file.target_col().unwrap(); // Vectors are binary array
-        let binary_array = binary_data.as_any()
+        let binary_array = binary_data
+            .as_any()
             .downcast_ref::<BinaryArray>()
             .expect("Failed to cast as BinaryArray");
 
-        let _ = binary_array.iter()
-            .map(|value| {
-                value.map(|bytes| {
-                    dbg!(std::str::from_utf8(bytes).unwrap());
-                })
-            });
+        let _ = binary_array.iter().map(|value| {
+            value.map(|bytes| {
+                dbg!(std::str::from_utf8(bytes).unwrap());
+            })
+        });
     }
 }

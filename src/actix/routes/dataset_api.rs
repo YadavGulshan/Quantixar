@@ -1,9 +1,12 @@
 use std::{
-    convert::Infallible, io::{Error, Read, Write}, path::Path,
+    convert::Infallible,
+    io::{Error, Read, Write},
+    path::Path,
 };
 
 use actix_multipart::{
-    form::{tempfile::TempFile, MultipartForm}, Multipart,
+    form::{tempfile::TempFile, MultipartForm},
+    Multipart,
 };
 use actix_web::{http::StatusCode, post, HttpResponse, Responder};
 use chrono::format;
@@ -11,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use tracing::debug;
 use utoipa::{openapi::Components, ToSchema};
 
-use crate::{common::operation_error::OperationResult};
+use crate::common::operation_error::OperationResult;
 
 #[derive(Serialize, Deserialize, ToSchema, Clone)]
 pub enum DataType {
@@ -52,7 +55,6 @@ pub struct UploadedFile {
     #[schema(format = Binary)]
     file: TempFile,
 }
-
 
 #[utoipa::path(
 post,

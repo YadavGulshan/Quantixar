@@ -230,7 +230,14 @@ impl VectorStorage for SimpleDenseVectorStorage {
         vector: VectorRef,
         payload: Payload,
     ) -> OperationResult<()> {
-        let vector = vector.try_into()?;
+        let vector: &[f32] = vector.try_into()?;
+        if vector.len() != self.dim {
+            return Err(OperationError::service_error(format!(
+                "Vector dimension mismatch: expected {}, got {}",
+                self.dim,
+                vector.len()
+            )));
+        }
         self.vectors.insert(key, vector)?;
         self.set_deleted(key, false);
         self.update_stored(key, false, Some(vector))?;

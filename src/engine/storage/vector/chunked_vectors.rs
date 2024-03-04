@@ -1,5 +1,6 @@
 use std::cmp::max;
 use std::collections::TryReserveError;
+use std::error::Error;
 
 use crate::engine::types::types::PointOffsetType;
 use crate::engine::utils::vectors::{TrySetCapacity, TrySetCapacityExact};
@@ -68,7 +69,7 @@ impl<T: Clone + Copy + Send + Sync + Default> ChunkedVectors<T> {
 
     pub fn insert(&mut self, key: PointOffsetType, vector: &[T]) -> Result<(), TryReserveError> {
         let key = key as usize;
-
+        // check if size of vector is equal to dimension
         self.len = max(self.len, key + 1);
         self.chunks
             .resize_with(self.len.div_ceil(self.chunk_capacity), Vec::new);

@@ -25,7 +25,7 @@ use crate::{
     path = "/vector",
     request_body(
         content_type = "application/json",
-        content = AddVector,
+        content = InsertOperation,
     ),
     responses(
         (status = 200, description = "Add Vectors in HSNW",)
@@ -49,6 +49,10 @@ pub async fn add_vector<'a>(
 #[utoipa::path(
     post,
     path = "/vector/search",
+    request_body(
+        content_type = "application/json",
+        content = SearchVector,
+    ),
     responses(
         (status = 200, description = "Search Vectors in HSNW",)
     )

@@ -4,6 +4,7 @@ use ordered_float::OrderedFloat;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
+use utoipa::ToSchema;
 
 use crate::utils::remove_value_from_json_map;
 
@@ -18,7 +19,7 @@ pub const DEFAULT_VECTOR_NAME: &str = "";
 
 pub type DenseVector = Vec<VectorElementType>;
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, JsonSchema)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, JsonSchema, ToSchema)]
 pub struct Payload(pub Map<String, Value>);
 
 #[derive(Copy, Clone, PartialEq, Debug, Default)]

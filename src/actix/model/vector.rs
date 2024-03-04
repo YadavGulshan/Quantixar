@@ -8,7 +8,7 @@ use validator::Validate;
 
 use crate::engine::types::types::Payload;
 
-#[derive(Debug, Deserialize, Serialize, JsonSchema, Clone, Validate)]
+#[derive(Debug, Deserialize, Serialize, JsonSchema, Clone, Validate, ToSchema)]
 pub struct AddVector {
     pub id: PointId,
     pub vectors: Vec<f32>,
