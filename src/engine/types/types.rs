@@ -70,6 +70,12 @@ impl Payload {
     pub fn iter(&self) -> serde_json::map::Iter {
         self.0.iter()
     }
+
+    pub fn new(key: &str, value: Value) -> Payload {
+        let mut map = Map::new();
+        map.insert(key.to_string(), value);
+        Payload(map)
+    }
 }
 
 impl Default for Payload {

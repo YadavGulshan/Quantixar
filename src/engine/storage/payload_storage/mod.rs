@@ -60,17 +60,18 @@ impl PayloadStorage {
     }
     // To dump the struct into a binary file:
     pub fn dump_to_file(&self, file: &str) -> OperationResult<()> {
-        let encoded: Vec<u8> = bincode::serialize(&self).unwrap();
+        let encoded: Vec<u8> = bincode::serialize(&self.payload).unwrap();
         let mut file = File::create(file)?;
         file.write_all(&encoded)?;
         Ok(())
     }
     // To load the struct from a binary file:
-    pub fn load_from_file(filename: &str) -> std::io::Result<PayloadStorage> {
-        let mut file = File::open(filename).unwrap();
-        let mut encoded: Vec<u8> = Vec::new();
-        file.read_to_end(&mut encoded)?;
-        let storage: PayloadStorage = bincode::deserialize(&encoded).unwrap();
-        Ok(storage)
+    pub fn load_from_file(&mut self, file: &str) -> OperationResult<()> {
+        let mut file = File::open(file)?;
+        let mut buffer = Vec::new();
+        file.read_to_end(&mut buffer)?;
+        let payload: HashMap<PointOffsetType, Payload> = bincode::deserialize(&buffer).unwrap();
+        self.payload = payload;
+        Ok(())
     }
 }

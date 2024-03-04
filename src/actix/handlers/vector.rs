@@ -13,7 +13,7 @@ use hnsw_rs::hnsw::Distance;
 use serde_json::json;
 
 use crate::{
-    actix::model::vector::{InsertOperation, SearchVector},
+    actix::model::vector::{AddVector, InsertOperation, SearchVector},
     engine::{
         index::hnsw::index::HNSWIndex,
         types::{types::VectorElementType, vector::VectorRef},
@@ -25,7 +25,7 @@ use crate::{
     path = "/vector",
     request_body(
         content_type = "application/json",
-        content = InsertOperation,
+        content = AddVector,
     ),
     responses(
         (status = 200, description = "Add Vectors in HSNW",)
@@ -75,18 +75,13 @@ pub async fn search_vector<'a>(
     }
 }
 
-#[post("/vector/dump")]
-pub async fn dump_vector<'a>(data: Data<Arc<Mutex<HNSWIndex<'a>>>>) -> impl Responder {
+#[post("/payload/dump")]
+pub async fn dump_payload<'a>(data: Data<Arc<Mutex<HNSWIndex<'a>>>>) -> impl Responder {
     match data.lock().unwrap().dump() {
-        Ok(result) => {
-            let response = json!({
-                "result": result,
-            });
-            HttpResponse::Ok().json(response)
-        }
+        Ok(()) => "Payload dumped successfully",
         Err(e) => {
-            log::error!("Error searching vector: {}", e);
-            HttpResponse::InternalServerError().finish()
+            log::error!("Error dumping payload: {}", e);
+            "Error dumping payload"
         }
     }
 }

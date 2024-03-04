@@ -3,16 +3,18 @@ use std::ops::Range;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
+use std::time::Instant;
 
 use atomic_refcell::AtomicRefCell;
 use bitvec::prelude::{BitSlice, BitVec};
 use log::debug;
 use parking_lot::RwLock;
+use rayon::iter::{IntoParallelIterator, ParallelBridge};
 use rocksdb::DB;
 use serde::{Deserialize, Serialize};
 
 use crate::common::operation_error::{check_process_stopped, OperationError, OperationResult};
-use crate::engine::storage::payload_storage::PayloadStorage;
+use crate::engine::storage::payload_storage::{self, PayloadStorage};
 use crate::engine::storage::rocksdb::rocksdb_wrapper::DatabaseColumnWrapper;
 use crate::engine::storage::rocksdb::storage_manager::StorageManager;
 use crate::engine::storage::rocksdb::Flusher;
@@ -39,7 +41,7 @@ pub struct SimpleDenseVectorStorage {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-struct StoredRecord {
+pub struct StoredRecord {
     pub deleted: bool,
     pub vector: Vec<VectorElementType>,
 }
@@ -94,11 +96,33 @@ pub fn open_simple_vector_storage(
 
 impl SimpleDenseVectorStorage {
     pub fn new(dim: usize, distance: Distance, coloumn_name: &str) -> SimpleDenseVectorStorage {
-        let vectors = ChunkedVectors::new(dim);
         let db =
             StorageManager::open_db_with_existing_cf(&std::path::Path::new(coloumn_name)).unwrap();
         let db_wrapper = DatabaseColumnWrapper::new(db, coloumn_name);
         db_wrapper.create_column_family_if_not_exists().unwrap();
+        let mut vectors = ChunkedVectors::new(dim);
+        // let (mut deleted, mut deleted_count) = (BitVec::new(), 0);
+        let mut max_time = std::time::Duration::from_secs(0);
+        let mut min_time = std::time::Duration::from_secs(10);
+        for (key, value) in db_wrapper.lock_db().iter().unwrap() {
+            let point_id: PointOffsetType = bincode::deserialize(&key).unwrap();
+            let stored_record: StoredRecord = bincode::deserialize(&value).unwrap();
+
+            // Propagate deleted flag
+            // if stored_record.deleted {
+            //     bitvec_set_deleted(&mut deleted, point_id, true);
+            //     deleted_count += 1;
+            // }
+            let time = Instant::now();
+            vectors.insert(point_id, &stored_record.vector).unwrap();
+            let elapsed = time.elapsed();
+            if elapsed > max_time {
+                max_time = elapsed;
+            }
+            if elapsed < min_time {
+                min_time = elapsed;
+            }
+        }
         SimpleDenseVectorStorage {
             dim,
             distance,
@@ -162,15 +186,12 @@ impl SimpleDenseVectorStorage {
         if !Path::new(file_name).exists() {
             return Ok(PayloadStorage::default());
         }
-        PayloadStorage::load_from_file(file_name).map_err(|e| {
-            OperationError::service_error(format!(
-                "Cannot load payload storage from file: {}",
-                e.to_string()
-            ))
-        })
+        let mut payload_storage = PayloadStorage::default();
+        payload_storage.load_from_file(file_name)?;
+        Ok(payload_storage)
     }
 
-    fn save_payloads(&self) -> OperationResult<()> {
+    pub fn save_payloads(&self) -> OperationResult<()> {
         self.payload_storage.dump_to_file("payload_dump.bin")?;
         Ok(())
     }

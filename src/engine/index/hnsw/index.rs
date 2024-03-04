@@ -74,27 +74,19 @@ impl<'b> HNSWIndex<'b> {
         let nb_elem = config.dataset_size;
         let nb_layer = 16.min((nb_elem as f32).ln().trunc() as usize);
         let ef_c = config.ef_construct;
-        let dir = PathBuf::from(".");
-        let file = String::from("dumpreloadgraph");
-        let mut hnsw_io = HnswIo::new(dir, file.clone());
-        let hnsw: Hnsw<f32, DistCosine> = if Path::new(&file).exists() {
-            let hnsw: Hnsw<f32, DistCosine> = hnsw_io.load_hnsw().unwrap();
-            hnsw.clone()
-        } else {
-            Hnsw::<f32, DistCosine>::new(
-                config.max_nb_connection,
-                config.m,
-                config.max_layer,
-                config.ef_construct,
-                dist_f,
-            )
-        };
+        let hnsw = Hnsw::<f32, DistCosine>::new(
+            config.max_nb_connection,
+            config.m,
+            config.max_layer,
+            config.ef_construct,
+            dist_f,
+        );
 
         let hnsw_index = HNSWIndex {
             vector_storage,
             config,
             path: path.to_path_buf(),
-            hnsw: hnsw.clone(),
+            hnsw,
         };
 
         Ok(hnsw_index)
@@ -126,15 +118,12 @@ impl<'b> HNSWIndex<'b> {
 
         dbg!(total_vector_count);
         if parallel_insertion {
-            log::info!("Performing parallel insertion");
             self.hnsw.parallel_insert_slice(&data_for_insertion);
         } else {
-            log::info!("Performing serial insertion");
             for d in data_for_insertion {
                 self.hnsw.insert_slice(d);
             }
         }
-
         Ok(())
     }
 
@@ -147,13 +136,7 @@ impl<'b> HNSWIndex<'b> {
         let mut vector_storage = self.vector_storage.borrow_mut();
 
         match vector_storage.insert_vector(key as PointOffsetType, vector_ref, payload) {
-            Ok(_) => {
-                let flush = vector_storage.flusher();
-                let result = flush();
-                if result.is_err() {
-                    return Err(result.err().unwrap());
-                }
-            }
+            Ok(_) => {}
             Err(e) => {
                 return Err(e);
             }
@@ -168,19 +151,10 @@ impl<'b> HNSWIndex<'b> {
         let mut vector_storage = self.vector_storage.borrow_mut();
         let mut data = Vec::new();
         for vector in vectors {
-            let key: usize = match vector.id {
-                crate::actix::model::vector::ExtendedPointId::NumId(id) => id as usize,
-                crate::actix::model::vector::ExtendedPointId::Uuid(id) => id.as_u128() as usize,
-            };
+            let key: usize = vector_storage.total_vector_count() + 1;
             let vector_ref = VectorRef::Dense(vector.vectors.as_slice());
             match vector_storage.insert_vector(key as PointOffsetType, vector_ref, vector.payload) {
-                Ok(_) => {
-                    let flush = vector_storage.flusher();
-                    let result = flush();
-                    if result.is_err() {
-                        return Err(result.err().unwrap());
-                    }
-                }
+                Ok(_) => {}
                 Err(e) => {
                     return Err(e);
                 }
@@ -227,7 +201,11 @@ impl<'b> HNSWIndex<'b> {
         self.hnsw.dump_layer_info();
         let filename = String::from("dumpreloadgraph");
         match self.hnsw.file_dump(&filename) {
-            Ok(_) => Ok(()),
+            Ok(_) => {
+                let vector_storage = self.vector_storage.borrow();
+                vector_storage.get_dense_storage().save_payloads()?;
+                Ok(())
+            }
             Err(e) => {
                 log::error!("Error dumping graph: {}", e);
                 Err(OperationError::InternalError)
