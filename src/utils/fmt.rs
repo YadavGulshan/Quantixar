@@ -3,10 +3,8 @@ use std::fmt;
 #[derive(Copy, Clone, Debug)]
 pub struct SerdeValue<'a>(pub &'a serde_value::Value);
 
-impl<'a> fmt::Display for SerdeValue<'a>
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
-    {
+impl<'a> fmt::Display for SerdeValue<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let val: &dyn fmt::Display = match &self.0 {
             serde_value::Value::Bool(val) => val,
             serde_value::Value::U8(val) => val,

@@ -1,19 +1,11 @@
 use std::{
-    fmt,
-    fs,
-    path::{
-        Path,
-        PathBuf,
-    },
+    fmt, fs,
+    path::{Path, PathBuf},
 };
 
-use crate::common::operation_error::{
-    OperationError,
-    OperationResult,
-};
+use crate::common::operation_error::{OperationError, OperationResult};
 
-fn assert_is_dir(dir: &Path) -> OperationResult<()>
-{
+fn assert_is_dir(dir: &Path) -> OperationResult<()> {
     if dir.is_dir() {
         Ok(())
     } else {
@@ -21,26 +13,22 @@ fn assert_is_dir(dir: &Path) -> OperationResult<()>
     }
 }
 
-fn not_a_dir_error(dir: &Path) -> OperationError
-{
+fn not_a_dir_error(dir: &Path) -> OperationError {
     OperationError::service_error(format!(
         "path {dir:?} is not a directory (or does not exist)"
     ))
 }
 
-fn failed_to_read_dir_error(dir: &Path, err: impl fmt::Display) -> OperationError
-{
+fn failed_to_read_dir_error(dir: &Path, err: impl fmt::Display) -> OperationError {
     OperationError::service_error(format!("failed to read {dir:?} directory: {err}"))
 }
 
-fn failed_to_move_error(path: &Path, dest: &Path, err: impl fmt::Display) -> OperationError
-{
+fn failed_to_move_error(path: &Path, dest: &Path, err: impl fmt::Display) -> OperationError {
     OperationError::service_error(format!("failed to move {path:?} to {dest:?}: {err}"))
 }
 
 /// Finds the first symlink in the directory tree and returns its path.
-pub fn find_symlink(directory: &Path) -> Option<PathBuf>
-{
+pub fn find_symlink(directory: &Path) -> Option<PathBuf> {
     let entries = match fs::read_dir(directory) {
         Ok(entries) => entries,
         Err(_) => return None,

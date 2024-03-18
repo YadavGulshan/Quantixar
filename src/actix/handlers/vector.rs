@@ -13,7 +13,7 @@ use hnsw_rs::hnsw::Distance;
 use serde_json::json;
 
 use crate::{
-    actix::model::vector::{AddVector, InsertOperation, SearchVector},
+    actix::model::vector::{AddVector, InsertOperation, SearchVector, SearchVectorBatch},
     engine::{
         index::hnsw::index::HNSWIndex,
         types::{types::VectorElementType, vector::VectorRef},
@@ -66,6 +66,37 @@ pub async fn search_vector<'a>(
     let top_k = operation.k;
 
     match data.lock().unwrap().search(vector, top_k) {
+        Ok(result) => {
+            let response = json!({
+                "result": result,
+            });
+            HttpResponse::Ok().json(response)
+        }
+        Err(e) => {
+            log::error!("Error searching vector: {}", e);
+            HttpResponse::InternalServerError().finish()
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/vector/search/batch",
+    request_body(
+        content_type = "application/json",
+        content = SearchVectorBatch,
+    ),
+    responses(
+        (status = 200, description = "Search Vectors in HSNW",)
+    )
+)]
+#[post("/vector/search/batch")]
+pub async fn search_vector_batch<'a>(
+    data: Data<Arc<Mutex<HNSWIndex<'a>>>>,
+    operation: web::Json<SearchVectorBatch>,
+) -> impl Responder {
+    let operation = operation.into_inner();
+    match data.lock().unwrap().search_batch(operation) {
         Ok(result) => {
             let response = json!({
                 "result": result,

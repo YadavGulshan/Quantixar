@@ -1451,9 +1451,8 @@ impl<'b, T: Clone + Send + Sync, D: Distance<T> + Send + Sync> Hnsw<'b, T, D> {
             let entry_point_opt_ref = self.layer_indexed_points.entry_point.read();
             if entry_point_opt_ref.is_none() {
                 return Vec::<Neighbour>::new();
-            } else {
-                entry_point = Arc::clone((*entry_point_opt_ref).as_ref().unwrap());
             }
+            entry_point = Arc::clone((*entry_point_opt_ref).as_ref().unwrap());
         }
         //
         let mut dist_to_entry = self.dist_f.eval(data, &entry_point.as_ref().data.get_v());

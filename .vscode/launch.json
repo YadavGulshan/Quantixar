@@ -261,7 +261,9 @@
                     "kind": "example"
                 }
             },
-            "args": [],
+            "args": [
+                "parallel"
+            ],
             "cwd": "${workspaceFolder}"
         },
         {

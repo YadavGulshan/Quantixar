@@ -1,7 +1,4 @@
-use std::{
-    fmt::Formatter,
-    str::FromStr,
-};
+use std::{fmt::Formatter, str::FromStr};
 
 use schemars::JsonSchema;
 use serde::Serialize;
@@ -9,16 +6,13 @@ use uuid::Uuid;
 
 #[derive(Debug, Serialize, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, JsonSchema)]
 #[serde(untagged)]
-pub enum ExtendedPointId
-{
+pub enum ExtendedPointId {
     NumId(u64),
     Uuid(Uuid),
 }
 
-impl std::fmt::Display for ExtendedPointId
-{
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result
-    {
+impl std::fmt::Display for ExtendedPointId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             ExtendedPointId::NumId(idx) => write!(f, "{idx}"),
             ExtendedPointId::Uuid(uuid) => write!(f, "{uuid}"),
@@ -26,20 +20,16 @@ impl std::fmt::Display for ExtendedPointId
     }
 }
 
-impl From<u64> for ExtendedPointId
-{
-    fn from(idx: u64) -> Self
-    {
+impl From<u64> for ExtendedPointId {
+    fn from(idx: u64) -> Self {
         ExtendedPointId::NumId(idx)
     }
 }
 
-impl FromStr for ExtendedPointId
-{
+impl FromStr for ExtendedPointId {
     type Err = ();
 
-    fn from_str(s: &str) -> Result<Self, Self::Err>
-    {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         let try_num: Result<u64, _> = s.parse();
         if let Ok(num) = try_num {
             return Ok(Self::NumId(num));
@@ -52,8 +42,7 @@ impl FromStr for ExtendedPointId
     }
 }
 
-impl<'de> serde::Deserialize<'de> for ExtendedPointId
-{
+impl<'de> serde::Deserialize<'de> for ExtendedPointId {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,

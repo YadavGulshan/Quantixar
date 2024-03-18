@@ -902,7 +902,10 @@ impl Description {
         out.write(&self.max_nb_connection.to_ne_bytes()).unwrap();
         out.write(&self.nb_layer.to_ne_bytes()).unwrap();
         if self.nb_layer != NB_LAYER_MAX {
-            println!("dump of Description, nb_layer != NB_MAX_LAYER");
+            println!(
+                "dump of Description, nb_layer != NB_MAX_LAYER {}, {}",
+                self.nb_layer, NB_LAYER_MAX
+            );
             return Err(anyhow!("dump of Description, nb_layer != NB_MAX_LAYER"));
         }
         //
@@ -1395,7 +1398,7 @@ impl<
         let description = Description {
             format_version: 3,
             //  value is 1 for Full 0 for Light
-            dumpmode: dumpmode,
+            dumpmode,
             max_nb_connection: self.get_max_nb_connection(),
             nb_layer: self.get_max_level() as u8,
             ef: self.get_ef_construction(),

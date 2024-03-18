@@ -1,5 +1,9 @@
 use cpu_time::ProcessTime;
-use std::time::{Duration, SystemTime};
+use std::{
+    env,
+    io::Write,
+    time::{Duration, SystemTime},
+};
 
 // search in serial mode i7-core @2.7Ghz for 10 fist neighbours
 //  max_nb_conn   ef_cons    ef_search   scale_factor    extend  keep pruned  recall        req/s      last ratio
@@ -24,9 +28,9 @@ mod utils;
 use utils::*;
 
 pub fn main() {
-    let mut parallel = true;
+    let mut parallel = env::args().any(|x| x == "parallel");
     //
-    let fname = String::from("/private/tmp/fashion-mnist-784-euclidean.hdf5");
+    let fname = String::from("./bench/fashion-mnist-784-euclidean.hdf5");
     println!("\n\n test_load_hdf5 {:?}", fname);
     // now recall that data are stored in row order.
     let anndata = annhdf5::AnnBenchmarkData::new(fname).unwrap();
@@ -40,7 +44,7 @@ pub fn main() {
     log::info!(" nb neighbours answers for test data : {} \n\n", knbn_max);
     //
     let max_nb_connection = 24;
-    let nb_layer = 16.min((nb_elem as f32).ln().trunc() as usize);
+    let nb_layer = 16;
     let ef_c = 400;
     println!(
         " number of elements to insert {:?} , setting max nb layer to {:?} ef_construction {:?}",
@@ -112,12 +116,26 @@ pub fn main() {
         "total cpu time for search requests {:?} , system time {:?} ",
         search_cpu_time, search_sys_time
     );
+
     // now compute recall rate
+    let mut file = std::fs::File::create(format!(
+        "./bench/benchmark_data{}.csv",
+        SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs()
+    ))
+    .unwrap();
+    file.write_all(
+        format!("recall,last_ratio,distance,true_distance,total_neighbours\n").as_bytes(),
+    )
+    .unwrap();
+
     for i in 0..anndata.test_data.len() {
         let true_distances = anndata.test_distances.row(i);
         let max_dist = true_distances[knbn - 1];
-        let mut _knn_neighbours_id: Vec<usize> =
-            knn_neighbours_for_tests[i].iter().map(|p| p.d_id).collect();
+        // let mut _knn_neighbours_id: Vec<usize> =
+        //     knn_neighbours_for_tests[i].iter().map(|p| p.d_id).collect();
         let knn_neighbours_dist: Vec<f32> = knn_neighbours_for_tests[i]
             .iter()
             .map(|p| p.distance)
@@ -134,8 +152,21 @@ pub fn main() {
             ratio = knn_neighbours_dist[knn_neighbours_dist.len() - 1] / max_dist;
         }
         last_distances_ratio.push(ratio);
+        file.write_all(
+            format!(
+                "{},{},{},{},{}\n",
+                recall,
+                ratio,
+                knn_neighbours_dist[knn_neighbours_dist.len() - 1],
+                max_dist,
+                knn_neighbours_dist.len()
+            )
+            .as_bytes(),
+        )
+        .unwrap();
     }
-    let mean_recall = (recalls.iter().sum::<usize>() as f32) / ((knbn * recalls.len()) as f32);
+    let recall_sum = recalls.iter().sum::<usize>() as f32;
+    let mean_recall = (recall_sum) / ((knbn * recalls.len()) as f32);
     println!(
         "\n mean fraction nb returned by search {:?} ",
         (nb_returned.iter().sum::<usize>() as f32) / ((nb_returned.len() * knbn) as f32)

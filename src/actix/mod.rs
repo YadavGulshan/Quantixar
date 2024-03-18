@@ -75,7 +75,7 @@ pub async fn init(settings: Settings) -> Result<(), Error> {
     let server = HttpServer::new(move || {
         let json_cfg = web::JsonConfig::default()
             // limit request payload size
-            .limit(1000000 * 25)
+            .limit(1000000 * 25) // 25mb
             // only accept text/plain content type
             // .content_type(|mime| mime == mime::TEXT_PLAIN)
             // use custom error handler
@@ -90,6 +90,7 @@ pub async fn init(settings: Settings) -> Result<(), Error> {
             .wrap(Compress::default())
             .wrap(cors)
             .wrap(Logger::default().exclude("/"))
+            .app_data(json_cfg)
             .app_data(Data::new(engine.clone()))
             .configure(config_index_api)
             .configure(config_swagger_ui)

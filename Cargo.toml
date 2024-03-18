@@ -1,5 +1,5 @@
 [workspace]
-members = ["lib/common/io", "lib/common/memory"]
+members = [ "lib/client","lib/common/io", "lib/common/memory"]
 
 [package]
 name = "quantixar"

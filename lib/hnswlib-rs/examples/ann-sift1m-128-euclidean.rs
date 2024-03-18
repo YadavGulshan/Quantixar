@@ -34,7 +34,7 @@ pub fn main() {
     //
     let parallel = true;
     //
-    let fname = String::from("/private/tmp/sift-128-euclidean.hdf5");
+    let fname = String::from("./bench/sift-128-euclidean.hdf5");
     println!("\n\n test_load_hdf5 {:?}", fname);
     // now recall that data are stored in row order.
     let anndata = annhdf5::AnnBenchmarkData::new(fname).unwrap();

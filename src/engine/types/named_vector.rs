@@ -7,105 +7,105 @@ use crate::engine::types::vector::{Vector, VectorRef};
 
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct NamedVectors<'a> {
-  pub(crate) map: TinyMap<'a>,
+    pub(crate) map: TinyMap<'a>,
 }
 
 impl<'a> NamedVectors<'a> {
-  pub fn from_ref(key: &'a str, value: VectorRef<'a>) -> Self {
-    let mut map = TinyMap::new();
-    map.insert(
-      Cow::Borrowed(key),
-      match value {
-        VectorRef::Dense(v) => CowVector::Dense(Cow::Borrowed(v)),
-      },
-    );
-    Self { map }
-  }
-
-  pub fn from<const N: usize>(arr: [(String, Vec<VectorElementType>); N]) -> Self {
-    NamedVectors {
-      map: arr
-              .into_iter()
-              .map(|(k, v)| (CowKey::from(k), CowVector::Dense(Cow::Owned(v))))
-              .collect(),
+    pub fn from_ref(key: &'a str, value: VectorRef<'a>) -> Self {
+        let mut map = TinyMap::new();
+        map.insert(
+            Cow::Borrowed(key),
+            match value {
+                VectorRef::Dense(v) => CowVector::Dense(Cow::Borrowed(v)),
+            },
+        );
+        Self { map }
     }
-  }
 
-  pub fn from_map(map: HashMap<String, Vector>) -> Self {
-    Self {
-      map: map
-              .into_iter()
-              .map(|(k, v)| (CowKey::from(k), v.into()))
-              .collect(),
+    pub fn from<const N: usize>(arr: [(String, Vec<VectorElementType>); N]) -> Self {
+        NamedVectors {
+            map: arr
+                .into_iter()
+                .map(|(k, v)| (CowKey::from(k), CowVector::Dense(Cow::Owned(v))))
+                .collect(),
+        }
     }
-  }
 
-  pub fn from_map_ref(map: &'a HashMap<String, Vec<VectorElementType>>) -> Self {
-    Self {
-      map: map
-              .iter()
-              .map(|(k, v)| (CowKey::from(k), CowVector::Dense(Cow::Borrowed(v))))
-              .collect(),
+    pub fn from_map(map: HashMap<String, Vector>) -> Self {
+        Self {
+            map: map
+                .into_iter()
+                .map(|(k, v)| (CowKey::from(k), v.into()))
+                .collect(),
+        }
     }
-  }
 
-  pub fn insert(&mut self, name: String, vector: Vector) {
-    self.map.insert(
-      CowKey::Owned(name),
-      match vector {
-        Vector::Dense(v) => CowVector::Dense(Cow::Owned(v)),
-      },
-    );
-  }
+    pub fn from_map_ref(map: &'a HashMap<String, Vec<VectorElementType>>) -> Self {
+        Self {
+            map: map
+                .iter()
+                .map(|(k, v)| (CowKey::from(k), CowVector::Dense(Cow::Borrowed(v))))
+                .collect(),
+        }
+    }
 
-  pub fn insert_ref(&mut self, name: &'a str, vector: VectorRef<'a>) {
-    self.map.insert(
-      CowKey::Borrowed(name),
-      match vector {
-        VectorRef::Dense(v) => CowVector::Dense(Cow::Borrowed(v)),
-      },
-    );
-  }
+    pub fn insert(&mut self, name: String, vector: Vector) {
+        self.map.insert(
+            CowKey::Owned(name),
+            match vector {
+                Vector::Dense(v) => CowVector::Dense(Cow::Owned(v)),
+            },
+        );
+    }
 
-  pub fn contains_key(&self, key: &str) -> bool {
-    self.map.contains_key(key)
-  }
+    pub fn insert_ref(&mut self, name: &'a str, vector: VectorRef<'a>) {
+        self.map.insert(
+            CowKey::Borrowed(name),
+            match vector {
+                VectorRef::Dense(v) => CowVector::Dense(Cow::Borrowed(v)),
+            },
+        );
+    }
 
-  pub fn len(&self) -> usize {
-    self.map.len()
-  }
+    pub fn contains_key(&self, key: &str) -> bool {
+        self.map.contains_key(key)
+    }
 
-  pub fn is_empty(&self) -> bool {
-    self.map.is_empty()
-  }
+    pub fn len(&self) -> usize {
+        self.map.len()
+    }
 
-  pub fn keys(&self) -> impl Iterator<Item=&str> {
-    self.map.iter().map(|(k, _)| k.as_ref())
-  }
+    pub fn is_empty(&self) -> bool {
+        self.map.is_empty()
+    }
 
-  pub fn into_owned_map(self) -> HashMap<String, Vector> {
-    self.map
+    pub fn keys(&self) -> impl Iterator<Item = &str> {
+        self.map.iter().map(|(k, _)| k.as_ref())
+    }
+
+    pub fn into_owned_map(self) -> HashMap<String, Vector> {
+        self.map
             .into_iter()
             .map(|(k, v)| (k.into_owned(), v.to_owned()))
             .collect()
-  }
+    }
 
-  pub fn iter(&self) -> impl Iterator<Item=(&str, VectorRef<'_>)> {
-    self.map.iter().map(|(k, v)| (k.as_ref(), v.as_vec_ref()))
-  }
+    pub fn iter(&self) -> impl Iterator<Item = (&str, VectorRef<'_>)> {
+        self.map.iter().map(|(k, v)| (k.as_ref(), v.as_vec_ref()))
+    }
 
-  pub fn get(&self, key: &str) -> Option<VectorRef<'_>> {
-    self.map.get(key).map(|v| v.as_vec_ref())
-  }
+    pub fn get(&self, key: &str) -> Option<VectorRef<'_>> {
+        self.map.get(key).map(|v| v.as_vec_ref())
+    }
 }
 
 impl<'a> IntoIterator for NamedVectors<'a> {
-  type Item = (CowKey<'a>, CowVector<'a>);
+    type Item = (CowKey<'a>, CowVector<'a>);
 
-  type IntoIter =
-  tinyvec::TinyVecIterator<[(CowKey<'a>, CowVector<'a>); super::tiny_kv::CAPACITY]>;
+    type IntoIter =
+        tinyvec::TinyVecIterator<[(CowKey<'a>, CowVector<'a>); super::tiny_kv::CAPACITY]>;
 
-  fn into_iter(self) -> Self::IntoIter {
-    self.map.into_iter()
-  }
+    fn into_iter(self) -> Self::IntoIter {
+        self.map.into_iter()
+    }
 }

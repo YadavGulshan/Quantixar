@@ -12,12 +12,18 @@ use crate::engine::types::types::Payload;
 pub struct AddVector {
     pub id: PointId,
     pub vectors: Vec<f32>,
-    pub payload: Payload,
+    pub payload: Option<Payload>,
 }
 
 #[derive(Deserialize, Debug, Validate, JsonSchema, ToSchema)]
 pub struct SearchVector {
     pub vector: Vec<f32>,
+    pub k: usize,
+}
+
+#[derive(Deserialize, Debug, Validate, JsonSchema, ToSchema)]
+pub struct SearchVectorBatch {
+    pub search: Vec<Vec<f32>>,
     pub k: usize,
 }
 

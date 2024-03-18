@@ -18,7 +18,10 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde_json::{Map, Value};
 
 use crate::{
-    actix::{handlers::vector, model::vector::AddVector},
+    actix::{
+        handlers::vector,
+        model::vector::{AddVector, SearchVectorBatch},
+    },
     common::operation_error::OperationError,
     engine::{
         storage::vector::base::VectorStorage,
@@ -153,20 +156,25 @@ impl<'b> HNSWIndex<'b> {
         for vector in vectors {
             let key: usize = vector_storage.total_vector_count() + 1;
             let vector_ref = VectorRef::Dense(vector.vectors.as_slice());
-            match vector_storage.insert_vector(key as PointOffsetType, vector_ref, vector.payload) {
-                Ok(_) => {}
+            match vector_storage.insert_vector(
+                key as PointOffsetType,
+                vector_ref,
+                vector.payload.unwrap_or_default(),
+            ) {
+                Ok(_) => {
+                    data.push((vector.vectors, key));
+                }
                 Err(e) => {
                     return Err(e);
                 }
             };
-
-            data.push((vector.vectors.clone(), key));
         }
         let datas_with_id = data
             .par_iter()
-            .map(|x| (x.0.as_slice(), x.1))
-            .collect::<Vec<(&[VectorElementType], usize)>>();
-        self.hnsw.parallel_insert_slice(&datas_with_id);
+            .map(|x| (&x.0, x.1))
+            .collect::<Vec<(&Vec<f32>, usize)>>();
+
+        self.hnsw.parallel_insert(&datas_with_id);
         Ok(())
     }
 
@@ -197,6 +205,41 @@ impl<'b> HNSWIndex<'b> {
         Ok(payloads)
     }
 
+    pub fn search_batch(
+        &self,
+        search: SearchVectorBatch,
+    ) -> OperationResult<Vec<Vec<Map<String, Value>>>> {
+        let result: Vec<Vec<Neighbour>> =
+            self.hnsw
+                .parallel_search(&search.search, search.k, self.config.max_nb_connection);
+        let mut result_payloads = Vec::new();
+        for neighbours in result {
+            let payloads = neighbours
+                .iter()
+                .map(|x| {
+                    let payload = self
+                        .vector_storage
+                        .borrow()
+                        .get_payload(x.d_id as u32)
+                        .unwrap();
+                    let mut map = Map::new();
+                    map.insert(
+                        "id".to_string(),
+                        Value::Number(serde_json::Number::from(x.d_id as u32)),
+                    );
+                    map.insert("payload".to_string(), Value::Object(payload.0));
+                    map.insert(
+                        "distance".to_string(),
+                        Value::Number(serde_json::Number::from_f64(x.distance as f64).unwrap()),
+                    );
+                    map
+                })
+                .collect::<Vec<Map<String, Value>>>();
+            result_payloads.push(payloads);
+        }
+        Ok(result_payloads)
+    }
+
     pub fn dump(&self) -> OperationResult<()> {
         self.hnsw.dump_layer_info();
         let filename = String::from("dumpreloadgraph");
@@ -219,6 +262,4 @@ mod test {
     use super::*;
     use crate::engine::storage::vector::dense_vector_storage::SimpleDenseVectorStorage;
     use crate::engine::types::distance::Distance;
-
-
 }

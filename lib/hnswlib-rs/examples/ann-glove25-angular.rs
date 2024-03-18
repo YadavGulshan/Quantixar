@@ -54,7 +54,7 @@ use utils::*;
 pub fn main() {
     let parallel = true;
     //
-    let fname = String::from("/private/tmp/glove-25-angular.hdf5");
+    let fname = String::from("./bench/glove-25-angular.hdf5");
     println!("\n\n test_load_hdf5 {:?}", fname);
     // now recall that data are stored in row order.
     let mut anndata = annhdf5::AnnBenchmarkData::new(fname).unwrap();

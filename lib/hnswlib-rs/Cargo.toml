@@ -22,12 +22,13 @@ path = "src/lib.rs"
 [[example]]
 name = "random"
 path = "examples/random.rs"
-[[example]]
-name = "poem"
-path = "examples/poem.rs"
-[[example]]
-name = "embedding"
-path = "examples/embedding.rs"
+
+# [[example]]
+# name = "poem"
+# path = "examples/poem.rs"
+# [[example]]
+# name = "embedding"
+# path = "examples/embedding.rs"
 
 
 [[example]]
@@ -95,7 +96,7 @@ packed_simd = { version = "0.3", optional = true }
 [dev-dependencies]
 hdf5 = { version = "0.8" }
 ndarray = { version = "0.15" }
-rust-bert = { version = "0.22.0", features = ["download-libtorch"] }
+# rust-bert = { version = "0.22.0", features = ["download-libtorch"] }
 
 [features]
 

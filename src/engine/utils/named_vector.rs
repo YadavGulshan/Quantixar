@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use crate::engine::types::named_vector::NamedVectors;
 use crate::engine::types::vector::Vector;
+use std::collections::HashMap;
 
 pub fn transpose_map_into_named_vector<TVector: Into<Vector>>(
     map: HashMap<String, Vec<TVector>>,
